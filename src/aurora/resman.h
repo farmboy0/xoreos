@@ -419,6 +419,8 @@ private:
 		Resource();
 
 		bool operator<(const Resource &right) const;
+
+		static bool compareForDumping(const Resource &res1, const Resource &res2);
 	};
 
 	/** List of resources, sorted by priority. */

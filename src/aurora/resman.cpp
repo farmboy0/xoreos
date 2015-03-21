@@ -103,6 +103,9 @@ bool ResourceManager::Resource::operator<(const Resource &right) const {
 	return priority < right.priority;
 }
 
+bool ResourceManager::Resource::compareForDumping(const Resource &res1, const Resource &res2) {
+	return res1.type < res2.type || (res1.type == res2.type && res1.name < res2.name);
+}
 
 ResourceManager::ResourceManager() : _hasSmall(false),
 	_hashAlgo(Common::kHashFNV64) {
@@ -1042,26 +1045,45 @@ void ResourceManager::dumpResourcesList(const Common::UString &fileName) const {
 	if (!file.open(fileName))
 		throw Common::Exception(Common::kOpenError);
 
-	file.writeString("                Name                 |        Hash        |     Size    \n");
-	file.writeString("-------------------------------------|--------------------|-------------\n");
+	file.writeString("                Name                         |  Type |   Size  |Priority|     Path\n");
+	file.writeString("---------------------------------------------|-------|---------|--------|---------\n");
 
+	ResourceList resList = ResourceList();
 	for (ResourceMap::const_iterator r = _resources.begin(); r != _resources.end(); ++r) {
 		if (r->second.empty())
 			continue;
 
-		const Resource &res = r->second.back();
+		for (ResourceList::const_iterator l = r->second.begin(); l != r->second.end(); ++l) {
+			resList.push_back(*l);
+		}
+	}
+	resList.sort(ResourceManager::Resource::compareForDumping);
 
-		const Common::UString &name = res.name;
-		const Common::UString   ext = TypeMan.setFileType("", res.type);
-		const uint64           hash = r->first;
-		const uint32           size = getResourceSize(res);
+	for (ResourceList::const_iterator res = resList.begin(); res != resList.end(); ++res) {
+		const Common::UString &name = res->name;
+		const Common::UString   ext = TypeMan.setFileType("", res->type);
+		const uint32           size = getResourceSize(*res);
 
-		const Common::UString line =
-			Common::UString::format("%32s%4s | %s | %12d\n", name.c_str(), ext.c_str(),
-                               Common::formatHash(hash).c_str(), size);
+		Common::UString path = "";
+		switch (res->source) {
+		case kSourceNone:
+			path = "None";
+			break;
+		case kSourceFile:
+			path = res->path;
+			break;
+		case kSourceArchive:
+			path = res->archive->known->resource->path;
+		}
+
+		const Common::UString line = Common::UString::format(
+				"%40s%4s |%6d |%8d |%7d | %s\n", name.c_str(),
+				ext.c_str(), res->type, size, res->priority, path.c_str());
 
 		file.writeString(line);
 	}
+
+	resList.clear();
 
 	file.flush();
 	file.close();
