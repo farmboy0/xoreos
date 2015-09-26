@@ -91,6 +91,12 @@ void Console::updateCaches() {
 void Console::updateModules() {
 	_modules.clear();
 	Game::getModules(_modules);
+	_modules.push_back("aui1");
+	_modules.push_back("aui2");
+	_modules.push_back("aui3");
+	_modules.push_back("aui4");
+	_modules.push_back("aui5");
+	_modules.push_back("aui6");
 
 	setArguments("loadmodule", _modules);
 }
