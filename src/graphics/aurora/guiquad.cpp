@@ -286,6 +286,16 @@ void GUIQuad::render(RenderPass pass) {
 	}
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+		glEnable(GL_COLOR_LOGIC_OP);
+		glLogicOp(GL_XOR);
+	glBegin(GL_LINE_LOOP);
+		glVertex2f(_x1, _y1);
+		glVertex2f(_x2, _y1);
+		glVertex2f(_x2, _y2);
+		glVertex2f(_x1, _y2);
+	glEnd();
+		glDisable(GL_COLOR_LOGIC_OP);
 }
 
 } // End of namespace Aurora

@@ -124,14 +124,18 @@ void KotORWidget::setPosition(float x, float y, float z) {
 	float oX, oY, oZ;
 	getPosition(oX, oY, oZ);
 
+	info("%s::setPosition(%f, %f, %f)", getTag().c_str(), x, y, z);
 	Widget::setPosition(x, y, z);
 	getPosition(x, y, z);
+	info("%s::setPosition(%f, %f, %f)", getTag().c_str(), x, y, z);
 
 	if (_quad) {
 		float qX, qY, qZ;
 		_quad->getPosition(qX, qY, qZ);
 
 		_quad->setPosition(qX - oX + x, qY - oY + y, qZ - oZ + z);
+		_quad->getPosition(qX, qY, qZ);
+		info("%s.quad::setPosition(%f, %f, %f)", getTag().c_str(), qX, qY, qZ);
 	}
 
 	if (_text) {
@@ -139,6 +143,8 @@ void KotORWidget::setPosition(float x, float y, float z) {
 		_text->getPosition(tX, tY, tZ);
 
 		_text->setPosition(tX - oX + x, tY - oY + y, tZ - oZ + z);
+		_text->getPosition(tX, tY, tZ);
+		info("%s.text::setPosition(%f, %f, %f)", getTag().c_str(), tX, tY, tZ);
 	}
 
 	if (_highlight) {
