@@ -58,6 +58,11 @@ public:
 	/** Abort the currently running GUI. */
 	virtual void abort();
 
+	/** Add a widget. */
+	void addWidget(Widget *widget);
+	/** Remove a widget. */
+	void removeWidget(Widget *widget);
+
 	/** Add a single event for consideration into the GUI event queue. */
 	void addEvent(const Events::Event &event);
 	/** Process the current event queue. */
@@ -74,11 +79,6 @@ protected:
 
 	GUI *_sub; ///< The currently running sub GUI.
 
-
-	/** Add a widget. */
-	void addWidget(Widget *widget);
-	/** Remove a widget. */
-	void removeWidget(Widget *widget);
 
 	/** Does this specific widget exist within the GUI? */
 	bool hasWidget(const Common::UString &tag) const;
