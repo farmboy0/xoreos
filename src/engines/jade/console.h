@@ -29,6 +29,8 @@
 
 #include "src/engines/aurora/console.h"
 
+#include "src/engines/kotor/gui/gui.h"
+
 namespace Engines {
 
 namespace Jade {
@@ -63,6 +65,14 @@ private:
 	void cmdPlayCue    (const CommandLine &cl);
 	void cmdPlaySetCue (const CommandLine &cl);
 	void cmdMusicState (const CommandLine &cl);
+	void cmdShowGUI (const CommandLine &cl);
+
+	class GUILoader : public ::Engines::KotOR::GUI {
+	public:
+		GUILoader(const Common::UString &guiName, ::Engines::Console *console);
+		~GUILoader();
+	};
+	GUILoader *_gui;
 };
 
 } // End of namespace Jade

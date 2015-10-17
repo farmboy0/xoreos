@@ -31,6 +31,7 @@
 #include "src/common/util.h"
 #include "src/common/filepath.h"
 #include "src/common/filelist.h"
+#include "src/common/error.h"
 #include "src/common/configman.h"
 
 #include "src/aurora/resman.h"
@@ -51,7 +52,7 @@ namespace Jade {
 
 Console::Console(JadeEngine &engine) :
 	::Engines::Console(engine, Graphics::Aurora::kSystemFontMono, 13),
-	_engine(&engine) {
+	_engine(&engine), _gui(0) {
 
 	registerCommand("exitmodule" , boost::bind(&Console::cmdExitModule , this, _1),
 			"Usage: exitmodule\nExit the module, returning to the main menu");
@@ -72,9 +73,13 @@ Console::Console(JadeEngine &engine) :
 			"Usage: playsetcue <sound set> <sound name>\nPlay the specified sound from the sound set");
 	registerCommand("musicstate" , boost::bind(&Console::cmdMusicState , this, _1),
 			"Usage: musicstate <new music state>\nSets the current music state");
+	registerCommand("showgui" , boost::bind(&Console::cmdShowGUI , this, _1),
+			"Usage: showgui <gui>\nLoad the GUI from the specified GUI resource");
 }
 
 Console::~Console() {
+	if (_gui)
+		delete _gui;
 }
 
 void Console::updateCaches() {
@@ -223,6 +228,41 @@ void Console::cmdMusicState(const CommandLine &cl) {
 	uint32 musicState;
 	Common::parseString(cl.args, musicState);
 	CuePlay.changeMusicState(musicState);
+}
+
+void Console::cmdShowGUI(const CommandLine &cl) {
+	if (cl.args.empty()) {
+		printCommandHelp(cl.cmd);
+		return;
+	}
+
+	std::vector<Common::UString> args;
+	Common::UString::split(cl.args, ' ', args);
+
+	if (args.size() != 1) {
+		printCommandHelp(cl.cmd);
+		return;
+	}
+
+	try {
+		if (_gui) {
+			_gui->hide();
+			delete _gui;
+		}
+		_gui = new GUILoader(args[0], this);
+		_gui->show();
+		hide();
+	} catch (Common::Exception &e) {
+		printException(e);
+	}
+}
+
+Console::GUILoader::GUILoader(const Common::UString &guiName, ::Engines::Console *console = 0) :
+	::Engines::KotOR::GUI(console) {
+
+	load(guiName);
+}
+Console::GUILoader::~GUILoader() {
 }
 
 } // End of namespace Jade
