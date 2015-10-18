@@ -1024,7 +1024,7 @@ const Functions::FunctionPointer Functions::kFunctionPointers[] = {
 	{  897, "ShowScoreBoard"                         , 0                                                   },
 	{  898, "GetScoreBoardPosition"                  , 0                                                   },
 	{  899, "WriteToScoreBoard"                      , 0                                                   },
-	{  900, "ShowChapterScreen"                      , 0                                                   },
+	{  900, "ShowChapterScreen"                      , &Functions::showChapterScreen                       },
 	{  901, "GetTaskGroupActive"                     , 0                                                   },
 	{  902, "SetCreatureHalfShadow"                  , 0                                                   },
 	{  903, "SetCreatureFullShadow"                  , 0                                                   },

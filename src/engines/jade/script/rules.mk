@@ -38,4 +38,5 @@ src_engines_jade_libjade_la_SOURCES += \
     src/engines/jade/script/functions_2da.cpp \
     src/engines/jade/script/functions_game.cpp \
     src/engines/jade/script/functions_sound.cpp \
+    src/engines/jade/script/functions_gui.cpp \
     $(EMPTY)

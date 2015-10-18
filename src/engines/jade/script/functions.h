@@ -302,6 +302,10 @@ private:
 	void get2DAEntryFloat (Aurora::NWScript::FunctionContext &ctx);
 	void get2DAEntryString(Aurora::NWScript::FunctionContext &ctx);
 	// '---
+
+	// .--- GUI, functions_gui.cpp
+	void showChapterScreen(Aurora::NWScript::FunctionContext &ctx);
+	// '---
 };
 
 } // End of namespace Jade
