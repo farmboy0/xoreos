@@ -45,8 +45,29 @@ class Console;
 
 namespace Jade {
 
+struct ChapterScreenInfo {
+	Common::UString title;
+	Common::UString text;
+	Common::UString background;
+	Common::UString sound;
+	float scrollSpeed;
+	bool isSkippable;
+	bool useTitleColor;
+	bool useTextColor;
+	bool useGUI;
+	float titleColorR;
+	float titleColorG;
+	float titleColorB;
+	float textColorR;
+	float textColorG;
+	float textColorB;
+	Common::UString gui;
+};
+
 class Area;
 class Creature;
+
+class IngameGUI;
 
 /** A Jade module. */
 class Module : public Jade::ObjectContainer {
@@ -100,6 +121,13 @@ public:
 	 */
 	bool startConversation(const Common::UString &conv, Creature &pc,
 	                       Object &obj, bool noWidescreen = false, bool resetZoom = true);
+	// '---
+
+	/** Show the chapter screen GUI.
+	 *
+	 *  @param  chapter         The information to show on the chapter screen.
+	 */
+	void showChapterScreen(ChapterScreenInfo *chapter);
 	// '---
 
 	void delayScript(const Common::UString &script,
@@ -156,6 +184,8 @@ private:
 
 	bool _hasModule; ///< Do we have a module?
 	bool _running;   ///< Are we currently running a module?
+
+	IngameGUI *_ingameGUI; ///< The ingame GUI elements.
 
 	/** Resources added by the current module. */
 	std::list<Common::ChangeID> _resources;

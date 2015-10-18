@@ -38,6 +38,8 @@
 #include "src/engines/jade/area.h"
 #include "src/engines/jade/creature.h"
 
+#include "src/engines/jade/gui/ingame/ingame.h"
+
 namespace Engines {
 
 namespace Jade {
@@ -50,6 +52,7 @@ bool Module::Action::operator<(const Action &s) const {
 Module::Module(::Engines::Console &console) : _console(&console), _hasModule(false),
 	_running(false), _exit(false) {
 
+	_ingameGUI = new IngameGUI(*this, _console);
 }
 
 Module::~Module() {
@@ -124,10 +127,14 @@ void Module::showMenu() {
 	// TODO: Module::showMenu()
 }
 
-bool Module::startConversation (const Common::UString &UNUSED(conv), Creature &UNUSED(pc), Object &UNUSED(obj),
-                                bool UNUSED(noWidescreen), bool UNUSED(resetZoom)) {
-	// TODO
-	return false;
+bool Module::startConversation (const Common::UString &conv, Creature &pc, Object &obj,
+                                bool noWidescreen, bool resetZoom) {
+
+	return _ingameGUI->startConversation(conv, pc, obj, noWidescreen, resetZoom);
+}
+
+void Module::showChapterScreen(ChapterScreenInfo *chapter) {
+	_ingameGUI->showChapterScreen(chapter);
 }
 
 void Module::load() {
@@ -279,6 +286,7 @@ void Module::handleEvents() {
 
 	CameraMan.update();
 
+	_ingameGUI->processEventQueue();
 	_area->processEventQueue();
 }
 

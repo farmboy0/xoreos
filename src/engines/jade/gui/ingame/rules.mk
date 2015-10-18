@@ -17,14 +17,12 @@
 # You should have received a copy of the GNU General Public License
 # along with xoreos. If not, see <http://www.gnu.org/licenses/>.
 
-# GUI system in Jade Empire.
+# In-Game menu in Jade Empire.
 
 src_engines_jade_libjade_la_SOURCES += \
+    src/engines/jade/gui/ingame/ingame.h \
     $(EMPTY)
 
 src_engines_jade_libjade_la_SOURCES += \
+    src/engines/jade/gui/ingame/ingame.cpp \
     $(EMPTY)
-
-include src/engines/jade/gui/main/rules.mk
-include src/engines/jade/gui/options/rules.mk
-include src/engines/jade/gui/ingame/rules.mk
