@@ -39,6 +39,8 @@ namespace Engines {
 
 namespace Jade {
 
+class ChapterScreen;
+
 class Module;
 
 class Object;
@@ -73,6 +75,8 @@ public:
 
 private:
 	Module *_module;
+
+	ChapterScreen *_chapterScreen; ///< The current chapter screen.
 };
 
 } // End of namespace Jade

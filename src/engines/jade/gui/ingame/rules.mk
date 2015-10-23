@@ -21,8 +21,10 @@
 
 src_engines_jade_libjade_la_SOURCES += \
     src/engines/jade/gui/ingame/ingame.h \
+    src/engines/jade/gui/ingame/chapter.h \
     $(EMPTY)
 
 src_engines_jade_libjade_la_SOURCES += \
     src/engines/jade/gui/ingame/ingame.cpp \
+    src/engines/jade/gui/ingame/chapter.cpp \
     $(EMPTY)

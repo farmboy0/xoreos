@@ -28,13 +28,14 @@
 
 #include "src/engines/jade/module.h"
 #include "src/engines/jade/gui/ingame/ingame.h"
+#include "src/engines/jade/gui/ingame/chapter.h"
 
 namespace Engines {
 
 namespace Jade {
 
 IngameGUI::IngameGUI(Module &module, ::Engines::Console *UNUSED(console)) :
-	_module(&module) {
+	_module(&module), _chapterScreen(0) {
 
 }
 
@@ -47,7 +48,11 @@ void IngameGUI::show() {
 void IngameGUI::hide() {
 }
 
-void IngameGUI::addEvent(const Events::Event &UNUSED(event)) {
+void IngameGUI::addEvent(const Events::Event &event) {
+	if (_chapterScreen) {
+		_chapterScreen->addEvent(event);
+		return;
+	}
 }
 
 void IngameGUI::processEventQueue() {
@@ -66,8 +71,15 @@ bool IngameGUI::startConversation(const Common::UString &UNUSED(conv), Creature 
 void IngameGUI::stopConversation() {
 }
 
-void IngameGUI::showChapterScreen(ChapterScreenInfo *UNUSED(chapter)) {
+void IngameGUI::showChapterScreen(ChapterScreenInfo *chapter) {
+	_chapterScreen = new ChapterScreen(chapter);
+	_chapterScreen->show();
+	_chapterScreen->run();
+	_chapterScreen->hide();
 
+	delete _chapterScreen;
+
+	_chapterScreen = 0;
 }
 
 } // End of namespace Jade
