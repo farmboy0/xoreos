@@ -28,6 +28,7 @@
 
 #include <cstring>
 
+#include "src/common/debug.h"
 #include "src/common/error.h"
 #include "src/common/maths.h"
 #include "src/common/readstream.h"
@@ -37,9 +38,13 @@
 #include "src/aurora/resman.h"
 
 #include "src/graphics/aurora/model_jade.h"
+#include "src/graphics/aurora/animation.h"
+#include "src/graphics/aurora/animnode.h"
 
 // Disable the "unused variable" warnings while most stuff is still stubbed
 IGNORE_UNUSED_VARIABLES
+
+using Common::kDebugGraphics;
 
 enum NodeType {
 	kNodeTypeNode             = 0x00000001,
@@ -141,34 +146,9 @@ Model_Jade::~Model_Jade() {
 }
 
 void Model_Jade::load(ParserContext &ctx) {
-	/* Magic and version number:
-	 *
-	 * - First byte must be 0x00
-	 * - Third byte version:
-	 *   - Upper bit PC (1) / Xbox (0)
-	 *   - Lower 7 bits version number
-	 *
-	 * We only support version 7 of the PC version.
-	 */
-	uint32 version = ctx.mdl->readUint32BE();
-	if (version != 0x00008700)
-		throw Common::Exception("Unsupported MDL: 0x%08X", version);
+	readMDLFileHeader(ctx);
 
-	ctx.offModelData = 20;
-
-	// Size of the MDL file, without the 20 byte header
-	ctx.mdlSize = ctx.mdl->readUint32LE();
-
-	// Size of the vertices part of the MDX file
-	ctx.mdxSizeVertices = ctx.mdl->readUint32LE();
-	// Size of the faces part of the MDX file
-	ctx.mdxSizeFaces    = ctx.mdl->readUint32LE();
-	// Size of a third part of the MDX file, always 0?
-	ctx.mdxSize3        = ctx.mdl->readUint32LE();
-
-	if (ctx.mdxSize3 != 0)
-		warning("Model_Jade: Model \"%s\" mdxSize3 == %d", _fileName.c_str(), ctx.mdxSize3);
-
+	//-- Start Geometry Header
 	ctx.mdl->skip(8); // Function pointers
 
 	_name = Common::readStringFixed(*ctx.mdl, Common::kEncodingASCII, 32);
@@ -182,10 +162,14 @@ void Model_Jade::load(ParserContext &ctx) {
 	uint8 type = ctx.mdl->readByte();
 
 	ctx.mdl->skip(3); // Padding
+	//-- End Geometry Header
+
+	//-- Start Model Header
 	ctx.mdl->skip(4); // Unknown
 	ctx.mdl->skip(4); // Reference count
 
-	ctx.mdl->skip(12); // TODO: Animation Header Pointer Array
+	uint32 animOffset, animCount;
+	readArrayDef(*ctx.mdl, animOffset, animCount);
 
 	ctx.mdl->skip(4); // Pointer to the super model
 
@@ -214,10 +198,18 @@ void Model_Jade::load(ParserContext &ctx) {
 	uint32 nameOffset, nameCount;
 	readArrayDef(*ctx.mdl, nameOffset, nameCount);
 
+	ctx.mdl->skip( 4); // Unknown
+
+	uint32 nodeOffset, nodeCount2;
+	readArrayDef(*ctx.mdl, nodeOffset, nodeCount2);
+	//-- End Model Header
+
+	//-- Start Node Names
 	std::vector<uint32> nameOffsets;
 	readArray(*ctx.mdl, ctx.offModelData + nameOffset, nameCount, nameOffsets);
 
 	readStrings(*ctx.mdl, nameOffsets, ctx.offModelData, ctx.names);
+	//-- End Node Names
 
 	newState(ctx);
 
@@ -228,6 +220,49 @@ void Model_Jade::load(ParserContext &ctx) {
 	rootNode->load(ctx);
 
 	addState(ctx);
+
+	std::vector<uint32> animOffsets;
+	readArray(*ctx.mdl, ctx.offModelData + animOffset, animCount, animOffsets);
+
+	for (std::vector<uint32>::const_iterator a = animOffsets.begin(); a != animOffsets.end(); ++a) {
+		ctx.mdl->seek(ctx.offModelData + *a);
+
+		newState(ctx);
+
+		readAnim(ctx);
+
+		addState(ctx);
+	}
+}
+
+void Model_Jade::readMDLFileHeader(ParserContext &ctx) {
+	/* Magic and version number:
+	 *
+	 * - First byte must be 0x00
+	 * - Third byte version:
+	 *   - Upper bit PC (1) / Xbox (0)
+	 *   - Lower 7 bits version number
+	 *
+	 * We only support version 7 of the PC version.
+	 */
+	uint32 version = ctx.mdl->readUint32BE();
+	if (version != 0x00008700)
+		throw Common::Exception("Unsupported MDL: 0x%08X", version);
+
+	ctx.offModelData = 20;
+
+	// Size of the MDL file, without the 20 byte header
+	ctx.mdlSize = ctx.mdl->readUint32LE();
+
+	// Size of the vertices part of the MDX file
+	ctx.mdxSizeVertices = ctx.mdl->readUint32LE();
+	// Size of the faces part of the MDX file
+	ctx.mdxSizeFaces    = ctx.mdl->readUint32LE();
+	// Size of a third part of the MDX file, always 0?
+	ctx.mdxSize3        = ctx.mdl->readUint32LE();
+
+	if (ctx.mdxSize3 != 0)
+		warning("Model_Jade: Model \"%s\" mdxSize3 == %d", _fileName.c_str(), ctx.mdxSize3);
 }
 
 void Model_Jade::readStrings(Common::SeekableReadStream &mdl,
@@ -244,6 +279,69 @@ void Model_Jade::readStrings(Common::SeekableReadStream &mdl,
 	}
 
 	mdl.seek(pos);
+}
+
+void Model_Jade::readAnim(ParserContext &ctx) {
+	//-- Start Geometry Header
+	ctx.mdl->skip(8); // Function pointers
+
+	ctx.state->name = Common::readStringFixed(*ctx.mdl, Common::kEncodingASCII, 32);
+
+	uint32 nodeHeadPointer = ctx.mdl->readUint32LE();
+	uint32 nodeCount       = ctx.mdl->readUint32LE();
+
+	ctx.mdl->skip(24); // Unknown
+	ctx.mdl->skip( 4); // Pointer to the MDL file
+
+	uint8 type = ctx.mdl->readByte();
+
+	ctx.mdl->skip(3); // Padding
+	//-- End Geometry Header
+
+	//-- Start Animation Header
+	float animLength = ctx.mdl->readIEEEFloatLE();
+	float transTime  = ctx.mdl->readIEEEFloatLE();
+
+	ctx.mdl->skip(2); // Unknown
+
+	Common::UString animRoot = Common::readStringFixed(*ctx.mdl, Common::kEncodingASCII, 32);
+
+	ctx.mdl->skip(2); // Unknown
+
+	uint32 eventOffset, eventCount;
+	readArrayDef(*ctx.mdl, eventOffset, eventCount);
+
+	ctx.mdl->skip(4); // Unknown
+
+	// Associated events
+	// TODO: Save in array, then pass to animation class
+	ctx.mdl->seek(ctx.offModelData + eventOffset);
+	for (uint32 i = 0; i < eventCount; i++) {
+		float after = ctx.mdl->readIEEEFloatLE();
+
+		Common::UString eventName = Common::readStringFixed(*ctx.mdl, Common::kEncodingASCII, 32);
+
+		ctx.mdl->skip(4); // Unknown
+	}
+
+	ModelNode_Jade *rootNode = new ModelNode_Jade(*this);
+	ctx.nodes.push_back(rootNode);
+
+	ctx.mdl->seek(ctx.offModelData + nodeHeadPointer);
+	rootNode->load(ctx);
+
+	Animation *anim = new Animation();
+	anim->setName(ctx.state->name);
+	anim->setLength(animLength);
+	anim->setTransTime(transTime);
+
+	_animationMap.insert(std::make_pair(ctx.state->name, anim));
+	debugC(kDebugGraphics, 4, "Loaded animation \"%s\" in model \"%s\"", ctx.state->name.c_str(), _name.c_str());
+
+	for (std::list<ModelNode_Jade *>::iterator n = ctx.nodes.begin(); n != ctx.nodes.end(); ++n) {
+		AnimNode *animnode = new AnimNode(*n);
+		anim->addAnimNode(animnode);
+	}
 }
 
 void Model_Jade::newState(ParserContext &ctx) {

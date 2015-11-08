@@ -86,9 +86,13 @@ private:
 
 	void load(ParserContext &ctx);
 
+	void readMDLFileHeader(ParserContext &ctx);
+
 	void readStrings(Common::SeekableReadStream &mdl,
 			const std::vector<uint32> &offsets, uint32 offset,
 			std::vector<Common::UString> &strings);
+
+	void readAnim(ParserContext &ctx);
 
 	friend class ModelNode_Jade;
 };
