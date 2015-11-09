@@ -36,7 +36,7 @@ namespace Jade {
 Graphics::Aurora::Model *JadeModelLoader::load(const Common::UString &resref,
 		Graphics::Aurora::ModelType type, const Common::UString &texture) {
 
-	return new Graphics::Aurora::Model_Jade(resref, type, texture);
+	return new Graphics::Aurora::Model_Jade(resref, type, texture, &_modelCache);
 }
 
 } // End of namespace Jade

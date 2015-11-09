@@ -130,7 +130,8 @@ void Model_Jade::ParserContext::newNode() {
 }
 
 
-Model_Jade::Model_Jade(const Common::UString &name, ModelType type, const Common::UString &texture) :
+Model_Jade::Model_Jade(const Common::UString &name, ModelType type,
+                       const Common::UString &texture, ModelCache *modelCache) :
 	Model(type) {
 
 	_fileName = name;
@@ -138,6 +139,8 @@ Model_Jade::Model_Jade(const Common::UString &name, ModelType type, const Common
 	ParserContext ctx(name, texture);
 
 	load(ctx);
+
+	loadSuperModel(modelCache);
 
 	finalize();
 }
@@ -189,7 +192,7 @@ void Model_Jade::load(ParserContext &ctx) {
 
 	float modelScale = ctx.mdl->readIEEEFloatLE();
 
-	Common::UString superModelName = Common::readStringFixed(*ctx.mdl, Common::kEncodingASCII, 32);
+	_superModelName = Common::readStringFixed(*ctx.mdl, Common::kEncodingASCII, 32);
 
 	ctx.mdl->skip( 4); // Pointer to some node
 	ctx.mdl->skip(12); // Unknown
@@ -263,6 +266,27 @@ void Model_Jade::readMDLFileHeader(ParserContext &ctx) {
 
 	if (ctx.mdxSize3 != 0)
 		warning("Model_Jade: Model \"%s\" mdxSize3 == %d", _fileName.c_str(), ctx.mdxSize3);
+}
+
+void Model_Jade::loadSuperModel(ModelCache *modelCache) {
+	if (!_superModelName.empty() && _superModelName != "NULL") {
+		bool foundInCache = false;
+
+		if (modelCache) {
+			ModelCache::iterator super = modelCache->find(_superModelName);
+			if (super != modelCache->end()) {
+				_superModel = super->second;
+
+				foundInCache = true;
+			}
+		}
+
+		if (!_superModel)
+			_superModel = new Model_Jade(_superModelName, _type, "", modelCache);
+
+		if (modelCache && !foundInCache)
+			modelCache->insert(std::make_pair(_superModelName, _superModel));
+	}
 }
 
 void Model_Jade::readStrings(Common::SeekableReadStream &mdl,

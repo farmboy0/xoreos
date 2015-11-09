@@ -42,7 +42,7 @@ class ModelNode_Jade;
 class Model_Jade : public Model {
 public:
 	Model_Jade(const Common::UString &name, ModelType type = kModelTypeObject,
-	           const Common::UString &texture = "");
+	           const Common::UString &texture = "", ModelCache *modelCache = 0);
 	~Model_Jade();
 
 private:
@@ -93,6 +93,8 @@ private:
 			std::vector<Common::UString> &strings);
 
 	void readAnim(ParserContext &ctx);
+
+	void loadSuperModel(ModelCache *modelCache);
 
 	friend class ModelNode_Jade;
 };
