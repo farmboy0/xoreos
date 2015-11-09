@@ -868,6 +868,10 @@ void Model::createBound() {
 	_absoluteBoundBox.absolutize();
 }
 
+void Model::readValue(Common::SeekableReadStream &stream, uint16 &value) {
+	value = stream.readUint16LE();
+}
+
 void Model::readValue(Common::SeekableReadStream &stream, uint32 &value) {
 	value = stream.readUint32LE();
 }
@@ -903,6 +907,10 @@ void Model::readArray(Common::SeekableReadStream &stream,
 
 	stream.seek(pos);
 }
+
+template
+void Model::readArray<uint16>(Common::SeekableReadStream &stream,
+                              uint32 offset, uint32 count, std::vector<uint16> &values);
 
 template
 void Model::readArray<uint32>(Common::SeekableReadStream &stream,

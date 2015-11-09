@@ -309,6 +309,7 @@ private:
 public:
 	// General loading helpers
 
+	static void readValue(Common::SeekableReadStream &stream, uint16 &value);
 	static void readValue(Common::SeekableReadStream &stream, uint32 &value);
 	static void readValue(Common::SeekableReadStream &stream, float  &value);
 
