@@ -66,10 +66,23 @@ enum NodeType {
 };
 
 enum NodeTypeFeature {
-	kNodeTypeHasHeader = 0x00000001,
-	kNodeTypeHasMesh   = 0x00000020,
-	kNodeTypeHasSkin   = 0x00000040,
-	kNodeTypeHasAABB   = 0x00000200
+	kNodeTypeHasHeader     = 0x00000001,
+	kNodeTypeHasLight      = 0x00000002,
+	kNodeTypeHasEmitter    = 0x00000004,
+	kNodeTypeHasCamera     = 0x00000008,
+	kNodeTypeHasReference  = 0x00000010,
+	kNodeTypeHasMesh       = 0x00000020,
+	kNodeTypeHasSkin       = 0x00000040,
+	kNodeTypeHasAnim       = 0x00000080,
+	kNodeTypeHasDangly     = 0x00000100,
+	kNodeTypeHasAABB       = 0x00000200,
+	kNodeTypeHasU800       = 0x00000800,
+	kNodeTypeHasGob        = 0x00001000,
+	kNodeTypeHasCollision  = 0x00002000,
+	kNodeTypeHasSphere     = 0x00004000,
+	kNodeTypeHasCapsule    = 0x00008000,
+	kNodeTypeHasDanglyBone = 0x00020000,
+	kNodeTypeHasController = 0x00040000
 };
 
 enum NodeFlag {
@@ -79,6 +92,9 @@ enum NodeFlag {
 	kNodeFlagsBeaming            = 1 << 3,
 	kNodeFlagsRender             = 1 << 4
 };
+
+static const uint16 kControllerTypePosition             = 8;
+static const uint16 kControllerTypeOrientation          = 20;
 
 namespace Graphics {
 
@@ -411,6 +427,9 @@ ModelNode_Jade::~ModelNode_Jade() {
 void ModelNode_Jade::load(Model_Jade::ParserContext &ctx) {
 	uint32 type = ctx.mdl->readUint32LE();
 
+	if ((type & 0xFFF80000) != 0)
+		throw Common::Exception("Unknown model node flags %08X", type);
+
 	// Node number in tree order
 	uint16 nodeNumber1 = ctx.mdl->readUint16LE();
 
@@ -440,9 +459,48 @@ void ModelNode_Jade::load(Model_Jade::ParserContext &ctx) {
 	std::vector<uint32> children;
 	Model::readArray(*ctx.mdl, ctx.offModelData + childrenOffset, childrenCount, children);
 
+	if (type & kNodeTypeHasLight) {
+		// TODO: Light
+		ctx.mdl->skip(0x9C);
+	}
+
+	if (type & kNodeTypeHasEmitter) {
+		// TODO: Emitter
+		ctx.mdl->skip(0x1AC);
+	}
+
+	if (type & kNodeTypeHasReference) {
+		// TODO: Reference
+		ctx.mdl->skip(0x70);
+	}
+
 	if (type & kNodeTypeHasMesh) {
 		readMesh(ctx);
 		createMesh(ctx);
+	}
+
+	if (type & kNodeTypeHasSkin) {
+		// TODO: Skin
+		ctx.mdl->skip(0x64);
+	}
+
+	if (type & kNodeTypeHasAABB) {
+		// TODO: AABB
+		ctx.mdl->skip(0x28);
+	}
+
+	if (type & kNodeTypeHasU800) {
+		// TODO: Unknown 0x800
+		ctx.mdl->skip(0xA0);
+	}
+
+	if (type & kNodeTypeHasGob) {
+		// TODO: Gob
+		ctx.mdl->skip(0x1C);
+	}
+
+	if (type & kNodeTypeHasController) {
+		readNodeControllers(ctx);
 	}
 
 	for (std::vector<uint32>::const_iterator child = children.begin(); child != children.end(); ++child) {
@@ -603,6 +661,101 @@ void ModelNode_Jade::readMesh(Model_Jade::ParserContext &ctx) {
 		readChunkedIndices(*ctx.mdx, ctx.indices, faceOffsetMDX, indexCount);
 
 	unfoldFaces(ctx.indices, meshType);
+}
+
+void ModelNode_Jade::readNodeControllers(Model_Jade::ParserContext &ctx) {
+	ctx.mdl->skip(4); // Unknown
+
+	uint32 controllerOffset, controllerCount;
+	Model::readArrayDef(*ctx.mdl, controllerOffset, controllerCount);
+
+	if (!controllerCount)
+		return;
+
+	uint32 timekeysOffset = ctx.mdl->readUint32LE();
+	uint32 timekeysCount  = ctx.mdl->readUint32LE();
+
+	uint32 dataOffset = ctx.mdl->readUint32LE();
+	uint32 dataCount  = ctx.mdl->readUint32LE();
+
+	uint32 always6  = ctx.mdl->readUint32LE();
+
+	ctx.mdl->seek(ctx.offModelData + controllerOffset);
+
+	std::vector<Controller> controller;
+	for (uint32 i = 0; i < controllerCount; i++) {
+		Controller c;
+		c.type        = ctx.mdl->readUint32LE();
+		ctx.mdl->skip(2); // Unknown
+		c.rowCount    = ctx.mdl->readUint16LE();
+		c.timeIndex   = ctx.mdl->readUint16LE();
+		c.dataIndex   = ctx.mdl->readUint16LE();
+		c.columnType  = ctx.mdl->readByte();
+		ctx.mdl->skip(3); // Padding
+		controller.push_back(c);
+	}
+
+	ctx.mdl->seek(ctx.offModelData + timekeysOffset);
+
+	std::vector<uint16> timekeys;
+	Model::readArray(*ctx.mdl, ctx.offModelData + timekeysOffset, timekeysCount, timekeys);
+
+	for (std::vector<Controller>::const_iterator it = controller.begin(); it != controller.end(); ++it) {
+		Controller c = *it;
+		if (c.type == kControllerTypePosition) {
+			if (c.columnType != 2)
+				throw Common::Exception("Position controller with type %d values on node %s", c.columnType, this->_name.c_str());
+			for (int r = 0; r < c.rowCount; r++) {
+				PositionKeyFrame p;
+				p.time = timekeys[c.timeIndex + r] / 256.0f;
+
+				ctx.mdl->seek(ctx.offModelData + dataOffset + (4 * c.dataIndex) + (12 * r));
+				p.x = ctx.mdl->readIEEEFloatLE();
+				p.y = ctx.mdl->readIEEEFloatLE();
+				p.z = ctx.mdl->readIEEEFloatLE();
+				_positionFrames.push_back(p);
+
+				// Starting position
+				if (p.time == 0.0f) {
+					_position[0] = p.x;
+					_position[1] = p.y;
+					_position[2] = p.z;
+				}
+			}
+
+		} else if (c.type == kControllerTypeOrientation) {
+			if (c.columnType != 4 && c.columnType != 5)
+				throw Common::Exception("Orientation controller with type %d values on node %s", c.columnType, this->_name.c_str());
+
+			for (int r = 0; r < c.rowCount; r++) {
+				QuaternionKeyFrame q;
+				q.time = timekeys[c.timeIndex + r] / 256.0f;
+
+				ctx.mdl->seek(ctx.offModelData + dataOffset + (4 * c.dataIndex) + (8 * r));
+				uint32 p1, p2;
+				if (c.columnType == 4) {
+					p1 = ctx.mdl->readUint32LE();
+					p2 = 0;
+				} else if (c.columnType == 5) {
+					p1 = ctx.mdl->readUint32LE();
+					p2 = ctx.mdl->readUint32LE();
+				}
+				q.x = 1.0f - ((  p1        & 0x7FF ) / 1023.0f);
+				q.y = 1.0f - (( (p1 >> 11) & 0x7FF ) / 1023.0f);
+				q.z = 1.0f - (( (p1 >> 22) & 0x7FF ) / 511.0f);
+				q.q = sqrt(1.0f - ((q.x * q.x) + (q.y * q.y) + (q.z * q.z)));
+				_orientationFrames.push_back(q);
+
+				// Starting orientation
+				if (q.time == 0.0f) {
+					_orientation[0] = q.x;
+					_orientation[1] = q.y;
+					_orientation[2] = q.z;
+					_orientation[3] = q.q;
+				}
+			}
+		}
+	}
 }
 
 void ModelNode_Jade::readPlainIndices(Common::SeekableReadStream &stream, std::vector<uint16> &indices,

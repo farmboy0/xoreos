@@ -107,7 +107,17 @@ public:
 	void load(Model_Jade::ParserContext &ctx);
 
 private:
+	struct Controller {
+		uint32 type;
+		uint16 rowCount;
+		uint16 timeIndex;
+		uint16 dataIndex;
+		uint8  columnType;
+	};
+
 	void readMesh(Model_Jade::ParserContext &ctx);
+
+	void readNodeControllers(Model_Jade::ParserContext &ctx);
 
 	void readPlainIndices  (Common::SeekableReadStream &stream, std::vector<uint16> &indices,
 	                        uint32 offset, uint32 count);
