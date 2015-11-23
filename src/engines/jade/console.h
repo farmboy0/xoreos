@@ -56,6 +56,13 @@ private:
 	void cmdExitModule (const CommandLine &cl);
 	void cmdListModules(const CommandLine &cl);
 	void cmdLoadModule (const CommandLine &cl);
+
+	void cmdListXSB    (const CommandLine &cl);
+	void cmdListCues   (const CommandLine &cl);
+	void cmdListSets   (const CommandLine &cl);
+	void cmdPlayCue    (const CommandLine &cl);
+	void cmdPlaySetCue (const CommandLine &cl);
+	void cmdMusicState (const CommandLine &cl);
 };
 
 } // End of namespace Jade

@@ -27,6 +27,7 @@ src_engines_jade_libjade_la_SOURCES += \
     src/engines/jade/probes.h \
     src/engines/jade/types.h \
     src/engines/jade/modelloader.h \
+    src/engines/jade/soundcueplayer.h \
     src/engines/jade/console.h \
     src/engines/jade/game.h \
     src/engines/jade/module.h \
@@ -47,6 +48,7 @@ src_engines_jade_libjade_la_SOURCES += \
     src/engines/jade/jade.cpp \
     src/engines/jade/probes.cpp \
     src/engines/jade/modelloader.cpp \
+    src/engines/jade/soundcueplayer.cpp \
     src/engines/jade/console.cpp \
     src/engines/jade/game.cpp \
     src/engines/jade/module.cpp \

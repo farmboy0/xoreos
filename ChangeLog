@@ -68,6 +68,7 @@ Someday, ????-??-?? (Version 0.0.5)
 			- Implemented more engine script functions
 			- Implemented loading of lightmap textures
 			- Added the first screen of the main menu
+			- Added sound support
 		- WITCHER:
 			- Started implementing Lua script support
 	- DIST:
