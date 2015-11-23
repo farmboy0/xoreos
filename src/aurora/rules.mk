@@ -62,6 +62,8 @@ src_aurora_libaurora_la_SOURCES += \
     src/aurora/cdpth.h \
     src/aurora/nfofile.h \
     src/aurora/ltrfile.h \
+    src/aurora/soundbank.h \
+    src/aurora/wavebank.h \
     $(EMPTY)
 
 src_aurora_libaurora_la_SOURCES += \
@@ -101,6 +103,8 @@ src_aurora_libaurora_la_SOURCES += \
     src/aurora/cdpth.cpp \
     src/aurora/nfofile.cpp \
     src/aurora/ltrfile.cpp \
+    src/aurora/soundbank.cpp \
+    src/aurora/wavebank.cpp \
     $(EMPTY)
 
 src_aurora_libaurora_la_LIBADD = \
