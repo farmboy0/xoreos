@@ -36,6 +36,7 @@
 
 #include "src/engines/jade/placeable.h"
 #include "src/engines/jade/types.h"
+#include "src/engines/jade/soundcueplayer.h"
 
 namespace Engines {
 
@@ -191,6 +192,7 @@ bool Placeable::open(Object *opener) {
 	_lastOpenedBy = opener;
 	_state = newState;
 
+	playStateSound();
 	playAnimation(kAnimationOpeningADoorDoubleDoor);
 	runScript(kScriptOnOpen, this, opener);
 
@@ -205,6 +207,7 @@ bool Placeable::close(Object *closer) {
 
 		_state = newState;
 
+		playStateSound();
 		runScript(kScriptOnClose, this, closer);
 
 		return true;
@@ -229,6 +232,19 @@ int32 Placeable::nextState(const Common::UString &input) {
 		}
 	}
 	return -1;
+}
+
+void Placeable::playStateSound() {
+	if (_soundCue.empty())
+		return;
+
+	const Aurora::GFF3Struct &top = _fsm->getTopLevel();
+	const Aurora::GFF3Struct &sound = top.getStruct("Sound");
+
+	const Common::UString &soundKey = Common::UString::format("Sound%i", _state);
+	uint32 soundIndex = sound.getSint(soundKey);
+
+	CuePlay.playSoundCue(_soundCue, soundIndex);
 }
 
 } // End of namespace Jade
