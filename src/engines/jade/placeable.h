@@ -91,6 +91,8 @@ private:
 	void loadAppearance();
 	/** Determines the result State according to the state model */
 	int32 nextState(const Common::UString &input);
+	/** Plays the sound associated with the current state. */
+	void playStateSound();
 };
 
 } // End of namespace Jade
