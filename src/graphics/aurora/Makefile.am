@@ -47,7 +47,6 @@ noinst_HEADERS = \
                  geometryobject.h \
                  modelnode.h \
                  model.h \
-                 animnode.h \
                  animation.h \
                  model_nwn.h \
                  model_nwn2.h \
@@ -81,7 +80,6 @@ libaurora_la_SOURCES = \
                        geometryobject.cpp \
                        modelnode.cpp \
                        model.cpp \
-                       animnode.cpp \
                        animation.cpp \
                        model_nwn.cpp \
                        model_nwn2.cpp \

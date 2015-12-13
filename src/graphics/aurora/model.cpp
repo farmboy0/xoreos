@@ -47,8 +47,7 @@ namespace Graphics {
 
 namespace Aurora {
 
-Model::Model(ModelType type) : Renderable((RenderableType) type),
-	_type(type), _superModel(0), _currentState(0),
+Model::Model(ModelType type) : Renderable((RenderableType) type), _type(type), _superModel(0),
 	_currentAnimation(0), _nextAnimation(0), _drawBound(false),
 	_drawSkeleton(false), _drawSkeletonInvisible(false) {
 
@@ -68,6 +67,8 @@ Model::Model(ModelType type) : Renderable((RenderableType) type),
 
 	_loopAnimation = 0;
 
+	_currentState = "";
+
 	_boundRenderable = new Shader::ShaderRenderable();
 	_boundRenderable->setSurface(SurfaceMan.getSurface("defaultSurface"));
 	_boundRenderable->setMaterial(MaterialMan.getMaterial("defaultWhite"));
@@ -80,12 +81,8 @@ Model::~Model() {
 	for (AnimationMap::iterator a = _animationMap.begin(); a != _animationMap.end(); ++a)
 		delete a->second;
 
-	for (StateList::iterator s = _stateList.begin(); s != _stateList.end(); ++s) {
-		for (NodeList::iterator n = (*s)->nodeList.begin(); n != (*s)->nodeList.end(); ++n)
-			delete *n;
-
-		delete *s;
-	}
+	for (NodeList::iterator n = _nodeList.begin(); n != _nodeList.end(); ++n)
+		delete *n;
 
 	delete _boundRenderable;
 }
@@ -155,9 +152,8 @@ void Model::drawSkeleton(bool enabled, bool showInvisible) {
 void Model::setEnvironmentMap(const Common::UString &environmentMap) {
 	lockFrameIfVisible();
 
-	for (StateList::iterator s = _stateList.begin(); s != _stateList.end(); ++s)
-		for (NodeList::iterator n = (*s)->nodeList.begin(); n != (*s)->nodeList.end(); ++n)
-			(*n)->setEnvironmentMap(environmentMap);
+	for (NodeList::iterator n = _nodeList.begin(); n != _nodeList.end(); ++n)
+		(*n)->setEnvironmentMap(environmentMap);
 
 	unlockFrameIfVisible();
 }
@@ -188,6 +184,16 @@ Animation *Model::selectDefaultAnimation() const {
 	}
 
 	return 0;
+}
+
+void Model::setCurrentAnimation(Animation *anim) {
+	_currentAnimation = anim;
+	_elapsedTime = 0.0f;
+	for (NodeList::iterator n = _nodeList.begin(); n != _nodeList.end(); ++n)
+		if ((*n)->_attachedModel) {
+			(*n)->_attachedModel->_currentAnimation = anim;
+			(*n)->_attachedModel->_elapsedTime = 0.0f;
+		}
 }
 
 void Model::getScale(float &x, float &y, float &z) const {
@@ -301,28 +307,9 @@ void Model::createAbsolutePosition() {
 	_absoluteBoundBox.absolutize();
 }
 
-const std::list<Common::UString> &Model::getStates() const {
-	return _stateNames;
-}
-
 void Model::setState(const Common::UString &name) {
-	if (_stateList.empty())
-		return;
-
-	State *state = 0;
-
-	StateMap::iterator s = _stateMap.find(name);
-	if (s == _stateMap.end())
-		s = _stateMap.find("");
-
-	if (s != _stateMap.end())
-		state = s->second;
-	else
-		state = _stateList.front();
-
-	assert(state);
-
-	if (state == _currentState)
+	Animation *animation = getAnimation(name);
+	if (!animation)
 		return;
 
 	bool visible = isVisible();
@@ -331,7 +318,11 @@ void Model::setState(const Common::UString &name) {
 		hide();
 	}
 
-	_currentState = state;
+	animation->update(this, 0, 0);
+	_currentState = name;
+	for (NodeList::iterator n = _nodeList.begin(); n != _nodeList.end(); ++n)
+		if ((*n)->_attachedModel)
+			(*n)->_attachedModel->setState(name);
 
 	// TODO: Do we need to recreate the bounding box on a state change?
 
@@ -343,31 +334,17 @@ void Model::setState(const Common::UString &name) {
 	}
 }
 
-static const Common::UString kNoState;
 const Common::UString &Model::getState() const {
-	if (!_currentState)
-		return kNoState;
-
-	return _currentState->name;
+	return _currentState;
 }
 
 bool Model::hasNode(const Common::UString &node) const {
-	if (!_currentState)
-		return false;
-
-	NodeMap::iterator n = _currentState->nodeMap.find(node);
-	if (n == _currentState->nodeMap.end())
-		return false;
-
-	return true;
+	return (_nodeMap.find(node) != _nodeMap.end());
 }
 
 ModelNode *Model::getNode(const Common::UString &node) {
-	if (!_currentState)
-		return 0;
-
-	NodeMap::iterator n = _currentState->nodeMap.find(node);
-	if (n == _currentState->nodeMap.end()) {
+	NodeMap::iterator n = _nodeMap.find(node);
+	if (n == _nodeMap.end()) {
 		if (_superModel)
 			return _superModel->getNode(node);
 
@@ -378,11 +355,8 @@ ModelNode *Model::getNode(const Common::UString &node) {
 }
 
 const ModelNode *Model::getNode(const Common::UString &node) const {
-	if (!_currentState)
-		return 0;
-
-	NodeMap::const_iterator n = _currentState->nodeMap.find(node);
-	if (n == _currentState->nodeMap.end()) {
+	NodeMap::const_iterator n = _nodeMap.find(node);
+	if (n == _nodeMap.end()) {
 		if (_superModel)
 			return _superModel->getNode(node);
 
@@ -392,12 +366,17 @@ const ModelNode *Model::getNode(const Common::UString &node) const {
 	return n->second;
 }
 
-static std::list<ModelNode *> kEmptyNodeList;
 const std::list<ModelNode *> &Model::getNodes() {
-	if (!_currentState)
-		return kEmptyNodeList;
+	return _nodeList;
+}
 
-	return _currentState->nodeList;
+void Model::attachModel(const Common::UString &nodeName, Model *model) {
+	info("Attaching model %s to model %s at node %s", model->getName().c_str(), _name.c_str(), nodeName.c_str());
+	ModelNode *node = getNode(nodeName);
+	if (node) {
+		info("Attaching model %s to model %s at node %s", model->getName().c_str(), _name.c_str(), nodeName.c_str());
+		node->_attachedModel = model;
+	}
 }
 
 Animation *Model::getAnimation(const Common::UString &anim) {
@@ -462,10 +441,9 @@ void Model::manageAnimations(float dt) {
 
 	// Start a new animation if scheduled, interrupting the currently playing animation
 	if (_nextAnimation) {
-		_currentAnimation = _nextAnimation;
+		setCurrentAnimation(_nextAnimation);
 		_nextAnimation    = 0;
 
-		_elapsedTime = 0.0f;
 		lastFrame    = 0.0f;
 		nextFrame    = 0.0f;
 	}
@@ -478,18 +456,16 @@ void Model::manageAnimations(float dt) {
 			if (_loopAnimation > 0)
 				_loopAnimation--;
 
-			_elapsedTime = 0.0f;
 			lastFrame    = 0.0f;
 			nextFrame    = 0.0f;
 		} else
-			_currentAnimation = 0;
+			setCurrentAnimation(0);
 	}
 
 	// No animation, select a default one
 	if (!_currentAnimation) {
-		_currentAnimation = selectDefaultAnimation();
+		setCurrentAnimation(selectDefaultAnimation());
 
-		_elapsedTime = 0.0f;
 		lastFrame    = 0.0f;
 		nextFrame    = 0.0f;
 	}
@@ -500,7 +476,7 @@ void Model::manageAnimations(float dt) {
 }
 
 void Model::render(RenderPass pass) {
-	if (!_currentState || (pass > kRenderPassAll))
+	if (pass > kRenderPassAll)
 		return;
 
 	if (pass == kRenderPassAll) {
@@ -517,11 +493,12 @@ void Model::render(RenderPass pass) {
 	// Draw the bounding box, if requested
 	doDrawBound();
 
-	// Draw the nodes
-	for (NodeList::iterator n = _currentState->rootNodes.begin();
-	     n != _currentState->rootNodes.end(); ++n) {
+	info("Rendering model %s", _name.c_str());
 
+	// Draw the nodes
+	for (NodeList::iterator n = _rootNodes.begin(); n != _rootNodes.end(); ++n) {
 		glPushMatrix();
+		info("Rendering node %s", (*n)->_name.c_str());
 		(*n)->render(pass);
 		glPopMatrix();
 	}
@@ -605,7 +582,7 @@ void Model::doDrawSkeleton() {
 	if (_type == kModelTypeObject)
 		glDisable(GL_DEPTH_TEST);
 
-	for (NodeList::iterator n = _currentState->rootNodes.begin(); n != _currentState->rootNodes.end(); ++n)
+	for (NodeList::iterator n = _rootNodes.begin(); n != _rootNodes.end(); ++n)
 		(*n)->drawSkeleton(tform, _drawSkeletonInvisible);
 
 	if (_type == kModelTypeObject)
@@ -625,52 +602,19 @@ void Model::doDestroy() {
 }
 
 void Model::finalize() {
-	_currentState = 0;
-
-	createStateNamesList();
-	setState();
-
 	createBound();
 
 	// Order all node children lists
-	for (StateList::iterator s = _stateList.begin(); s != _stateList.end(); ++s)
-		for (NodeList::iterator n = (*s)->rootNodes.begin(); n != (*s)->rootNodes.end(); ++n)
-			(*n)->orderChildren();
+	for (NodeList::iterator n = _rootNodes.begin(); n != _rootNodes.end(); ++n)
+		(*n)->orderChildren();
 
 	_currentAnimation = selectDefaultAnimation();
-}
-
-void Model::createStateNamesList(std::list<Common::UString> *stateNames) {
-	bool isRoot = false;
-
-	if (!stateNames) {
-		_stateNames.clear();
-
-		stateNames = &_stateNames;
-		isRoot     = true;
-	}
-
-	for (StateList::const_iterator s = _stateList.begin(); s != _stateList.end(); ++s)
-		stateNames->push_back((*s)->name);
-
-	if (_superModel)
-		_superModel->createStateNamesList(stateNames);
-
-	if (isRoot) {
-		stateNames->sort();
-		stateNames->unique();
-	}
 }
 
 void Model::createBound() {
 	_boundBox.clear();
 
-	if (!_currentState)
-		return;
-
-	for (NodeList::iterator n = _currentState->rootNodes.begin();
-	     n != _currentState->rootNodes.end(); ++n) {
-
+	for (NodeList::iterator n = _rootNodes.begin(); n != _rootNodes.end(); ++n) {
 		Common::BoundingBox position;
 
 		(*n)->createAbsoluteBound(position);

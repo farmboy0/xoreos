@@ -51,8 +51,6 @@ private:
 	struct ParserContext {
 		Common::SeekableReadStream *mdl;
 
-		State *state;
-
 		bool isASCII;
 
 		std::list<ModelNode *> nodes;
@@ -61,9 +59,6 @@ private:
 
 		uint32 offModelData;
 		uint32 offRawData;
-
-		bool hasPosition;
-		bool hasOrientation;
 
 		Common::StreamTokenizer *tokenize;
 		std::vector<uint32> anims;
@@ -76,9 +71,6 @@ private:
 		void clear();
 	};
 
-
-	void newState(ParserContext &ctx);
-	void addState(ParserContext &ctx);
 
 	void loadBinary(ParserContext &ctx);
 	void readAnimBinary(ParserContext &ctx, uint32 offset);

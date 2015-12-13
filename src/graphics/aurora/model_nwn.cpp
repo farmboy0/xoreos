@@ -47,7 +47,6 @@
 
 #include "src/graphics/aurora/model_nwn.h"
 #include "src/graphics/aurora/animation.h"
-#include "src/graphics/aurora/animnode.h"
 
 // Disable the "unused variable" warnings while most stuff is still stubbed
 IGNORE_UNUSED_VARIABLES
@@ -120,7 +119,7 @@ namespace Aurora {
 
 Model_NWN::ParserContext::ParserContext(const Common::UString &name,
                                         const Common::UString &t) :
-	mdl(0), state(0), texture(t) {
+	mdl(0), texture(t) {
 
 	mdl = ResMan.getResource(name, ::Aurora::kFileTypeMDL);
 	if (!mdl)
@@ -147,12 +146,7 @@ Model_NWN::ParserContext::~ParserContext() {
 }
 
 void Model_NWN::ParserContext::clear() {
-	for (std::list<ModelNode *>::iterator n = nodes.begin(); n != nodes.end(); ++n)
-		delete *n;
 	nodes.clear();
-
-	delete state;
-	state = 0;
 }
 
 bool Model_NWN::ParserContext::findNode(const Common::UString &name,
@@ -256,32 +250,30 @@ void Model_NWN::loadBinary(ParserContext &ctx) {
 
 	_superModelName = Common::readStringFixed(*ctx.mdl, Common::kEncodingASCII, 64);
 
-	newState(ctx);
-
 	ModelNode_NWN_Binary *rootNode = new ModelNode_NWN_Binary(*this);
 	ctx.nodes.push_back(rootNode);
 
 	ctx.mdl->seek(ctx.offModelData + nodeHeadPointer);
 	rootNode->load(ctx);
 
-	addState(ctx);
+	for (std::list<ModelNode *>::iterator n = ctx.nodes.begin(); n != ctx.nodes.end(); ++n) {
+		_nodeList.push_back(*n);
+		_nodeMap.insert(std::make_pair((*n)->getName(), *n));
+		if (!(*n)->getParent())
+			_rootNodes.push_back(*n);
+	}
 
 	std::vector<uint32> animOffsets;
 	readArray(*ctx.mdl, ctx.offModelData + animOffset, animCount, animOffsets);
 
 	for (std::vector<uint32>::const_iterator offset = animOffsets.begin(); offset != animOffsets.end(); ++offset) {
-		newState(ctx);
-
+		ctx.clear();
 		readAnimBinary(ctx, ctx.offModelData + *offset);
-
-		addState(ctx);
 	}
 }
 
 void Model_NWN::loadASCII(ParserContext &ctx) {
 	ctx.mdl->seek(0);
-
-	newState(ctx);
 
 	while (!ctx.mdl->eos()) {
 		std::vector<Common::UString> line;
@@ -335,19 +327,10 @@ void Model_NWN::loadASCII(ParserContext &ctx) {
 		}
 	}
 
-	addState(ctx);
-
 	for (std::vector<uint32>::iterator a = ctx.anims.begin(); a != ctx.anims.end(); ++a) {
 		ctx.mdl->seek(*a);
 		readAnimASCII(ctx);
 	}
-}
-void Model_NWN::newState(ParserContext &ctx) {
-	ctx.clear();
-
-	ctx.hasPosition    = false;
-	ctx.hasOrientation = false;
-	ctx.state          = new State;
 }
 
 void Model_NWN::skipAnimASCII(ParserContext &ctx) {
@@ -386,39 +369,12 @@ void Model_NWN::readAnimASCII(ParserContext &UNUSED(ctx)) {
 	//       (at time t, position, orientation = x)
 }
 
-void Model_NWN::addState(ParserContext &ctx) {
-	if (!ctx.state || ctx.nodes.empty()) {
-		ctx.clear();
-		return;
-	}
-
-	for (std::list<ModelNode *>::iterator n = ctx.nodes.begin();
-	     n != ctx.nodes.end(); ++n) {
-
-		ctx.state->nodeList.push_back(*n);
-		ctx.state->nodeMap.insert(std::make_pair((*n)->getName(), *n));
-
-		if (!(*n)->getParent())
-			ctx.state->rootNodes.push_back(*n);
-	}
-
-	_stateList.push_back(ctx.state);
-	_stateMap.insert(std::make_pair(ctx.state->name, ctx.state));
-
-	if (!_currentState)
-		_currentState = ctx.state;
-
-	ctx.state = 0;
-
-	ctx.nodes.clear();
-}
-
 void Model_NWN::readAnimBinary(ParserContext &ctx, uint32 offset) {
 	ctx.mdl->seek(offset);
 
 	ctx.mdl->skip(8); // Function pointers
 
-	ctx.state->name = Common::readStringFixed(*ctx.mdl, Common::kEncodingASCII, 64);
+	Common::UString name = Common::readStringFixed(*ctx.mdl, Common::kEncodingASCII, 64);
 
 	uint32 nodeHeadPointer = ctx.mdl->readUint32LE();
 	uint32 nodeCount       = ctx.mdl->readUint32LE();
@@ -456,16 +412,14 @@ void Model_NWN::readAnimBinary(ParserContext &ctx, uint32 offset) {
 	// Ah, we call addState, interesting
 	// Need to look at interaction with placeable states?
 	Animation *anim = new Animation();
-	anim->setName(ctx.state->name);
+	anim->setName(name);
 	anim->setLength(animLength);
 	anim->setTransTime(transTime);
-	_animationMap.insert(std::make_pair(ctx.state->name, anim));
-	debugC(kDebugGraphics, 4, "Loaded animation \"%s\" in model \"%s\"", ctx.state->name.c_str(), _name.c_str());
+	_animationMap.insert(std::make_pair(name, anim));
+	debugC(kDebugGraphics, 4, "Loaded animation \"%s\" in model \"%s\"", name.c_str(), _name.c_str());
 
-	for (std::list<ModelNode *>::iterator n = ctx.nodes.begin();
-	     n != ctx.nodes.end(); ++n) {
-		AnimNode *animnode = new AnimNode(*n);
-		anim->addAnimNode(animnode);
+	for (std::list<ModelNode *>::iterator n = ctx.nodes.begin(); n != ctx.nodes.end(); ++n) {
+		anim->addModelNode(*n);
 	}
 
 }
@@ -538,8 +492,7 @@ void ModelNode_NWN_Binary::load(Model_NWN::ParserContext &ctx) {
 
 	_name = Common::readStringFixed(*ctx.mdl, Common::kEncodingASCII, 32);
 
-	debugC(kDebugGraphics, 5, "Node \"%s\" in state \"%s\"", _name.c_str(),
-	       ctx.state->name.c_str());
+	debugC(kDebugGraphics, 5, "Node \"%s\"", _name.c_str());
 
 	ctx.mdl->skip(8); // Parent pointers
 
@@ -602,34 +555,11 @@ void ModelNode_NWN_Binary::load(Model_NWN::ParserContext &ctx) {
 		ctx.mdl->skip(0x4);
 	}
 
-	// If the node has no own geometry, inherit the geometry from the root state
-	if (!_mesh || !_mesh->data) {
-		ModelNode *node = _model->getNode(_name);
-		if (node && (node != this))
-			node->inheritGeometry(*this);
-	}
-
 	readNodeControllers(ctx, ctx.offModelData + controllerKeyOffset,
 	                    controllerKeyCount, controllerData);
 
-	// If the node has no own position controller, inherit the position from the root state
-	if (!ctx.hasPosition) {
-		ModelNode *node = _model->getNode(_name);
-		if (node)
-			node->inheritPosition(*this);
-	}
-
-	if (!ctx.hasOrientation) {
-		ModelNode *node = _model->getNode(_name);
-		if (node)
-			node->inheritOrientation(*this);
-	}
-
 
 	for (std::vector<uint32>::const_iterator child = children.begin(); child != children.end(); ++child) {
-		ctx.hasPosition    = false;
-		ctx.hasOrientation = false;
-
 		ModelNode_NWN_Binary *childNode = new ModelNode_NWN_Binary(*_model);
 		ctx.nodes.push_back(childNode);
 
@@ -954,7 +884,6 @@ void ModelNode_NWN_Binary::readNodeControllers(Model_NWN::ParserContext &ctx,
 					_position[0] = p.x;
 					_position[1] = p.y;
 					_position[2] = p.z;
-					ctx.hasPosition = true;
 				}
 			}
 
@@ -972,13 +901,11 @@ void ModelNode_NWN_Binary::readNodeControllers(Model_NWN::ParserContext &ctx,
 				_orientationFrames.push_back(q);
 				// Starting orientation
 				// TODO: Handle animation orientation correctly
-				if (data[timeIndex + 0] == 0.0f) {
-					_orientation[0] = data[dataIndex + 0];
-					_orientation[1] = data[dataIndex + 1];
-					_orientation[2] = data[dataIndex + 2];
-					_orientation[3] = Common::rad2deg(acos(data[dataIndex + 3]) * 2.0);
-
-					ctx.hasOrientation = true;
+				if (q.time == 0.0f) {
+					_orientation[0] = q.x;
+					_orientation[1] = q.y;
+					_orientation[2] = q.z;
+					_orientation[3] = Common::rad2deg(acos(q.q) * 2.0);
 				}
 			}
 
@@ -1017,8 +944,7 @@ void ModelNode_NWN_ASCII::load(Model_NWN::ParserContext &ctx,
 
 	_name = name;
 
-	debugC(kDebugGraphics, 5, "Node \"%s\" in state \"%s\"", _name.c_str(),
-	       ctx.state->name.c_str());
+	debugC(kDebugGraphics, 5, "Node \"%s\"", _name.c_str());
 
 	if ((type == "trimesh") || (type == "danglymesh") || (type == "skin")) {
 		_mesh = new ModelNode::Mesh();

@@ -37,6 +37,7 @@
 #include "src/graphics/glcontainer.h"
 #include "src/graphics/renderable.h"
 
+#include "src/graphics/aurora/modelnode.h"
 #include "src/graphics/aurora/types.h"
 
 #include "src/graphics/shader/shaderrenderable.h"
@@ -49,7 +50,6 @@ namespace Graphics {
 
 namespace Aurora {
 
-class ModelNode;
 class Animation;
 
 class Model : public GLContainer, public Renderable {
@@ -113,8 +113,6 @@ public:
 
 	// States
 
-	/** Return a list of all animation state names. */
-	const std::list<Common::UString> &getStates() const;
 	/** Set the current animation state. */
 	void setState(const Common::UString &name = "");
 	/** Return the name of the current state. */
@@ -123,17 +121,19 @@ public:
 
 	// Nodes
 
-	/** Does the specified node exist in the current state? */
+	/** Does the specified node exist? */
 	bool hasNode(const Common::UString &node) const;
 
-	/** Get the specified node, from the current state. */
+	/** Get the specified node. */
 	ModelNode *getNode(const Common::UString &node);
-	/** Get the specified node, from the current state. */
+	/** Get the specified node. */
 	const ModelNode *getNode(const Common::UString &node) const;
 
-	/** Get all nodes in the current state. */
+	/** Get all nodes. */
 	const std::list<ModelNode *> &getNodes();
 
+	/** Add another model as a child to the named node. */
+	void attachModel(const Common::UString &nodeName, Model *model);
 
 	// Animation
 
@@ -162,18 +162,11 @@ protected:
 	typedef std::map<Common::UString, ModelNode *, Common::UString::iless> NodeMap;
 	typedef std::map<Common::UString, Animation *, Common::UString::iless> AnimationMap;
 
-	/** A model state. */
-	struct State {
-		Common::UString name; ///< The state's name.
+	NodeList _nodeList;  ///< The nodes within the model.
+	NodeMap  _nodeMap;   ///< The nodes within the model, indexed by name.
+	NodeList _rootNodes; ///< The nodes without a parent.
 
-		NodeList nodeList; ///< The nodes within the state.
-		NodeMap  nodeMap;  ///< The nodes within the state, indexed by name.
-
-		NodeList rootNodes; ///< The nodes in the state without a parent.
-	};
-
-	typedef std::list<State *> StateList;
-	typedef std::map<Common::UString, State *> StateMap;
+	Common::UString _currentState; ///< The name of current state.
 
 	/** A default animation. */
 	struct DefaultAnimation {
@@ -193,12 +186,6 @@ protected:
 
 	Common::UString _superModelName; ///< Name of the super model.
 	Model *_superModel; ///< The actual super model.
-
-	StateList _stateList;   ///< All states within this model.
-	StateMap  _stateMap;    ///< All states within this model, index by name.
-	State   *_currentState; ///< The current state.
-
-	std::list<Common::UString> _stateNames; ///< All state names.
 
 	AnimationMap _animationMap; ///< Map of all animations in this model.
 
@@ -266,6 +253,7 @@ private:
 
 	Animation *selectDefaultAnimation() const;
 
+	void setCurrentAnimation(Animation *anim);
 
 public:
 	// General loading helpers

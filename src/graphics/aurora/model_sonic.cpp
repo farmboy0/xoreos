@@ -76,7 +76,7 @@ namespace Graphics {
 
 namespace Aurora {
 
-Model_Sonic::ParserContext::ParserContext(const Common::UString &name) : nsbmd(0), state(0) {
+Model_Sonic::ParserContext::ParserContext(const Common::UString &name) : nsbmd(0) {
 	Common::SeekableReadStream *stream = ResMan.getResource(name, ::Aurora::kFileTypeNSBMD);
 	if (!stream)
 		throw Common::Exception("No such NSBMD \"%s\"", name.c_str());
@@ -91,12 +91,7 @@ Model_Sonic::ParserContext::~ParserContext() {
 }
 
 void Model_Sonic::ParserContext::clear() {
-	for (std::list<ModelNode_Sonic *>::iterator n = nodes.begin(); n != nodes.end(); ++n)
-		delete *n;
 	nodes.clear();
-
-	delete state;
-	state = 0;
 }
 
 
@@ -713,15 +708,17 @@ void Model_Sonic::findStackBones(ParserContext &ctx) {
 void Model_Sonic::createModelNodes(ParserContext &ctx) {
 	/* Recursively add the model nodes according to how the bones connect. */
 
-	newState(ctx);
-
 	ModelNode_Sonic *rootNode = new ModelNode_Sonic(*this);
 	ctx.nodes.push_back(rootNode);
 
 	rootNode->load(ctx, *ctx.rootBones.front());
 	rootNode->createAbsoluteBound();
 
-	addState(ctx);
+	_rootNodes.push_back(rootNode);
+	for (std::list<ModelNode_Sonic *>::iterator n = ctx.nodes.begin(); n != ctx.nodes.end(); ++n) {
+		_nodeList.push_back(*n);
+		_nodeMap.insert(std::make_pair((*n)->getName(), *n));
+	}
 
 	// Evaluate the map of invisible bones
 	for (BoneInvisible::const_iterator v = ctx.boneInvisible.begin(); v != ctx.boneInvisible.end(); ++v) {
@@ -1094,37 +1091,6 @@ void Model_Sonic::createBound() {
 	_absoluteBoundBox.absolutize();
 }
 
-void Model_Sonic::newState(ParserContext &ctx) {
-	ctx.clear();
-
-	ctx.state = new State;
-}
-
-void Model_Sonic::addState(ParserContext &ctx) {
-	if (!ctx.state || ctx.nodes.empty()) {
-		ctx.clear();
-		return;
-	}
-
-	for (std::list<ModelNode_Sonic *>::iterator n = ctx.nodes.begin(); n != ctx.nodes.end(); ++n) {
-		ctx.state->nodeList.push_back(*n);
-		ctx.state->nodeMap.insert(std::make_pair((*n)->getName(), *n));
-
-		if (!(*n)->getParent())
-			ctx.state->rootNodes.push_back(*n);
-	}
-
-	_stateList.push_back(ctx.state);
-	_stateMap.insert(std::make_pair(ctx.state->name, ctx.state));
-
-	if (!_currentState)
-		_currentState = ctx.state;
-
-	ctx.state = 0;
-
-	ctx.nodes.clear();
-}
-
 // --- Run-time methods ---
 
 void Model_Sonic::evaluateGeometry() {
@@ -1336,7 +1302,7 @@ void Model_Sonic::render(RenderPass pass) {
 	 * TODO: Find a way to merge this back into Model?
 	 */
 
-	if (!_currentState || (pass > kRenderPassAll))
+	if (pass > kRenderPassAll)
 		return;
 
 	if (pass == kRenderPassAll) {

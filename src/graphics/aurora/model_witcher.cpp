@@ -78,7 +78,7 @@ enum NodeTrimeshControllerType {
 };
 
 
-Model_Witcher::ParserContext::ParserContext(const Common::UString &name) : mdb(0), state(0) {
+Model_Witcher::ParserContext::ParserContext(const Common::UString &name) : mdb(0) {
 	mdb = ResMan.getResource(name, ::Aurora::kFileTypeMDB);
 	if (!mdb)
 		throw Common::Exception("No such MDB \"%s\"", name.c_str());
@@ -91,12 +91,7 @@ Model_Witcher::ParserContext::~ParserContext() {
 }
 
 void Model_Witcher::ParserContext::clear() {
-	for (std::list<ModelNode_Witcher *>::iterator n = nodes.begin(); n != nodes.end(); ++n)
-		delete *n;
 	nodes.clear();
-
-	delete state;
-	state = 0;
 }
 
 
@@ -183,48 +178,17 @@ void Model_Witcher::load(ParserContext &ctx) {
 
 	ctx.mdb->skip(16);
 
-	newState(ctx);
-
 	ModelNode_Witcher *rootNode = new ModelNode_Witcher(*this);
 	ctx.nodes.push_back(rootNode);
 
 	ctx.mdb->seek(ctx.offModelData + offsetRootNode);
 	rootNode->load(ctx);
 
-	addState(ctx);
-}
-
-void Model_Witcher::newState(ParserContext &ctx) {
-	ctx.clear();
-
-	ctx.state = new State;
-}
-
-void Model_Witcher::addState(ParserContext &ctx) {
-	if (!ctx.state || ctx.nodes.empty()) {
-		ctx.clear();
-		return;
+	_rootNodes.push_back(rootNode);
+	for (std::list<ModelNode_Witcher *>::iterator n = ctx.nodes.begin(); n != ctx.nodes.end(); ++n) {
+		_nodeList.push_back(*n);
+		_nodeMap.insert(std::make_pair((*n)->getName(), *n));
 	}
-
-	for (std::list<ModelNode_Witcher *>::iterator n = ctx.nodes.begin();
-	     n != ctx.nodes.end(); ++n) {
-
-		ctx.state->nodeList.push_back(*n);
-		ctx.state->nodeMap.insert(std::make_pair((*n)->getName(), *n));
-
-		if (!(*n)->getParent())
-			ctx.state->rootNodes.push_back(*n);
-	}
-
-	_stateList.push_back(ctx.state);
-	_stateMap.insert(std::make_pair(ctx.state->name, ctx.state));
-
-	if (!_currentState)
-		_currentState = ctx.state;
-
-	ctx.state = 0;
-
-	ctx.nodes.clear();
 }
 
 

@@ -50,8 +50,6 @@ private:
 		Common::SeekableReadStream *mdl;
 		Common::SeekableReadStream *mdx;
 
-		State *state;
-
 		std::list<ModelNode_KotOR *> nodes;
 
 		Common::UString texture;
@@ -69,9 +67,6 @@ private:
 		void clear();
 	};
 
-
-	void newState(ParserContext &ctx);
-	void addState(ParserContext &ctx);
 
 	void load(ParserContext &ctx);
 	void readAnim(ParserContext &ctx, uint32 offset);

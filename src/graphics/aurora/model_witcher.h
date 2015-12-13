@@ -48,8 +48,6 @@ private:
 	struct ParserContext {
 		Common::SeekableReadStream *mdb;
 
-		State *state;
-
 		std::list<ModelNode_Witcher *> nodes;
 
 		uint16 fileVersion;
@@ -71,9 +69,6 @@ private:
 		void clear();
 	};
 
-
-	void newState(ParserContext &ctx);
-	void addState(ParserContext &ctx);
 
 	void load(ParserContext &ctx);
 

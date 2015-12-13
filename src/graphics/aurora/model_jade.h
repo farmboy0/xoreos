@@ -50,8 +50,6 @@ private:
 		Common::SeekableReadStream *mdl;
 		Common::SeekableReadStream *mdx;
 
-		State *state;
-
 		std::list<ModelNode_Jade *> nodes;
 
 		Common::UString texture;
@@ -80,9 +78,6 @@ private:
 		void newNode();
 	};
 
-
-	void newState(ParserContext &ctx);
-	void addState(ParserContext &ctx);
 
 	void load(ParserContext &ctx);
 

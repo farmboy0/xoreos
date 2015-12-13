@@ -70,20 +70,14 @@ private:
 		const ::Aurora::GFF4Struct *mmhTop;
 		const ::Aurora::GFF4Struct *mshTop;
 
-		State *state;
-
 		std::list<ModelNode_DragonAge *> nodes;
 
 		ParserContext(const Common::UString &name);
 		~ParserContext();
 
 		void open(const Common::UString &name);
-		void clear();
 	};
 
-
-	void newState(ParserContext &ctx);
-	void addState(ParserContext &ctx);
 
 	void load(ParserContext &ctx);
 

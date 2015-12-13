@@ -337,8 +337,6 @@ private:
 		StackBoneMap stackBones;
 		// '---
 
-		State *state;
-
 		std::list<ModelNode_Sonic *> nodes;
 
 		ParserContext(const Common::UString &name);
@@ -351,9 +349,6 @@ private:
 	struct Primitive;
 
 	// .--- Loading helpers
-	void newState(ParserContext &ctx);
-	void addState(ParserContext &ctx);
-
 	void load(ParserContext &ctx);
 
 	void readModel(ParserContext &ctx);

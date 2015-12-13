@@ -128,7 +128,7 @@ static const GFF4Struct *findMeshChunk(const GFF4Struct &mshTop, const Common::U
 
 
 Model_DragonAge::ParserContext::ParserContext(const Common::UString &name) :
-	mmh(0), msh(0), mmhTop(0), mshTop(0), state(0) {
+	mmh(0), msh(0), mmhTop(0), mshTop(0) {
 
 	try {
 
@@ -176,16 +176,7 @@ Model_DragonAge::ParserContext::~ParserContext() {
 	delete msh;
 	delete mmh;
 
-	clear();
-}
-
-void Model_DragonAge::ParserContext::clear() {
-	for (std::list<ModelNode_DragonAge *>::iterator n = nodes.begin(); n != nodes.end(); ++n)
-		delete *n;
 	nodes.clear();
-
-	delete state;
-	state = 0;
 }
 
 
@@ -217,8 +208,6 @@ void Model_DragonAge::load(ParserContext &ctx) {
 	if (!rootNodes)
 		return;
 
-	newState(ctx);
-
 	// Create root nodes
 	for (size_t i = 0; i < rootNodes->getFieldCount(); i++) {
 		const GFF4Struct *nodeGFF = getChild(*rootNodes, i);
@@ -231,38 +220,13 @@ void Model_DragonAge::load(ParserContext &ctx) {
 		rootNode->load(ctx, *nodeGFF);
 	}
 
-	addState(ctx);
-}
-
-void Model_DragonAge::newState(ParserContext &ctx) {
-	ctx.clear();
-
-	ctx.state = new State;
-}
-
-void Model_DragonAge::addState(ParserContext &ctx) {
-	if (!ctx.state || ctx.nodes.empty()) {
-		ctx.clear();
-		return;
-	}
-
 	for (std::list<ModelNode_DragonAge *>::iterator n = ctx.nodes.begin(); n != ctx.nodes.end(); ++n) {
-		ctx.state->nodeList.push_back(*n);
-		ctx.state->nodeMap.insert(std::make_pair((*n)->getName(), *n));
+		_nodeList.push_back(*n);
+		_nodeMap.insert(std::make_pair((*n)->getName(), *n));
 
 		if (!(*n)->getParent())
-			ctx.state->rootNodes.push_back(*n);
+			_rootNodes.push_back(*n);
 	}
-
-	_stateList.push_back(ctx.state);
-	_stateMap.insert(std::make_pair(ctx.state->name, ctx.state));
-
-	if (!_currentState)
-		_currentState = ctx.state;
-
-	ctx.state = 0;
-
-	ctx.nodes.clear();
 }
 
 

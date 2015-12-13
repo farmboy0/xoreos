@@ -61,7 +61,7 @@ ModelNode::Mesh::Mesh() : shininess(1.0f), alpha(1.0f), tilefade(0), render(fals
 
 
 ModelNode::ModelNode(Model &model) :
-	_model(&model), _parent(0), _level(0), _render(false), _mesh(0) {
+	_model(&model), _parent(0), _attachedModel(0), _level(0), _render(false), _mesh(0) {
 
 	_position[0] = 0.0f; _position[1] = 0.0f; _position[2] = 0.0f;
 	_rotation[0] = 0.0f; _rotation[1] = 0.0f; _rotation[2] = 0.0f;
@@ -197,93 +197,6 @@ void ModelNode::move(float x, float y, float z) {
 
 void ModelNode::rotate(float x, float y, float z) {
 	setRotation(_rotation[0] + x, _rotation[1] + y, _rotation[2] + z);
-}
-
-void ModelNode::inheritPosition(ModelNode &node) const {
-	node._position[0] = _position[0];
-	node._position[1] = _position[1];
-	node._position[2] = _position[2];
-}
-
-void ModelNode::inheritOrientation(ModelNode &node) const {
-	node._orientation[0] = _orientation[0];
-	node._orientation[1] = _orientation[1];
-	node._orientation[2] = _orientation[2];
-	node._orientation[3] = _orientation[3];
-}
-
-void ModelNode::inheritGeometry(ModelNode &node) const {
-	if (node._mesh && _mesh)
-		node._mesh->data = _mesh->data;
-	else
-		node._mesh = _mesh;
-	if (node._mesh && node._mesh->data)
-		node._render = _render;
-}
-
-void ModelNode::reparent(ModelNode &parent) {
-	_model = parent._model;
-	_level = parent._level + 1;
-
-	_model->_currentState->nodeList.push_back(this);
-	_model->_currentState->nodeMap.insert(std::make_pair(_name, this));
-
-	for (std::list<ModelNode *>::iterator c = _children.begin(); c != _children.end(); ++c)
-		(*c)->reparent(parent);
-}
-
-void ModelNode::addChild(Model *model) {
-	if (!model || !model->_currentState) {
-		delete model;
-		return;
-	}
-
-	model->hide();
-
-	bool visible = _model->isVisible();
-	_model->hide();
-
-	// Take over the nodes in the model's currentstate
-
-	for (Model::NodeList::iterator r = model->_currentState->rootNodes.begin();
-	     r != model->_currentState->rootNodes.end(); ++r) {
-
-		// TODO: Maybe we're REPLACING an existing node?
-		_children.push_back(*r);
-
-		(*r)->reparent(*this);
-	}
-
-	// Remove the nodes from the model's current state
-
-	for (Model::StateList::iterator s = model->_stateList.begin();
-	     s != model->_stateList.end(); ++s) {
-
-		if (*s == model->_currentState) {
-			(*s)->nodeList.clear();
-			(*s)->nodeMap.clear();
-			(*s)->rootNodes.clear();
-		}
-	}
-
-	for (Model::StateMap::iterator s = model->_stateMap.begin();
-	     s != model->_stateMap.end(); ++s) {
-
-		if (s->second == model->_currentState) {
-			s->second->nodeList.clear();
-			s->second->nodeMap.clear();
-			s->second->rootNodes.clear();
-		}
-	}
-
-	// Delete the model
-	delete model;
-
-	// Rebuild our model
-	_model->finalize();
-
-	if (visible)
-		_model->show();
 }
 
 void ModelNode::setEnvironmentMap(const Common::UString &environmentMap) {
@@ -596,6 +509,12 @@ void ModelNode::render(RenderPass pass) {
 	if (shouldRender)
 		renderGeometry(*mesh);
 
+	if (_attachedModel) {
+		glPushMatrix();
+		info("Rendering attached model %s", _attachedModel->_name.c_str());
+		_attachedModel->render(pass);
+		glPopMatrix();
+	}
 
 	// Render the node's children
 	for (std::list<ModelNode *>::iterator c = _children.begin(); c != _children.end(); ++c) {
@@ -651,73 +570,6 @@ void ModelNode::lockFrameIfVisible() {
 
 void ModelNode::unlockFrameIfVisible() {
 	_model->unlockFrameIfVisible();
-}
-
-void ModelNode::interpolatePosition(float time, float &x, float &y, float &z) const {
-	// If less than 2 keyframes, don't interpolate, just return the only position
-	if (_positionFrames.size() < 2) {
-		getPosition(x, y, z);
-		return;
-	}
-
-	size_t lastFrame = 0;
-	for (size_t i = 0; i < _positionFrames.size(); i++) {
-		const PositionKeyFrame &pos = _positionFrames[i];
-		if (pos.time >= time)
-			break;
-
-		lastFrame = i;
-	}
-
-	const PositionKeyFrame &last = _positionFrames[lastFrame];
-	if (lastFrame + 1 >= _positionFrames.size() || last.time == time) {
-		x = last.x;
-		y = last.y;
-		z = last.z;
-		return;
-	}
-
-	const PositionKeyFrame &next = _positionFrames[lastFrame + 1];
-
-	const float f = (time - last.time) / (next.time - last.time);
-	x = f * next.x + (1.0f - f) * last.x;
-	y = f * next.y + (1.0f - f) * last.y;
-	z = f * next.z + (1.0f - f) * last.z;
-}
-
-void ModelNode::interpolateOrientation(float time, float &x, float &y, float &z, float &a) const {
-	// If less than 2 keyframes, don't interpolate just return the only orientation
-	if (_orientationFrames.size() < 2) {
-		getOrientation(x, y, z, a);
-		return;
-	}
-
-	size_t lastFrame = 0;
-	for (size_t i = 0; i < _orientationFrames.size(); i++) {
-		const QuaternionKeyFrame &pos = _orientationFrames[i];
-		if (pos.time >= time)
-			break;
-
-		lastFrame = i;
-	}
-
-	const QuaternionKeyFrame &last = _orientationFrames[lastFrame];
-	if (lastFrame + 1 >= _orientationFrames.size() || last.time == time) {
-		x = last.x;
-		y = last.y;
-		z = last.z;
-		a = Common::rad2deg(acos(last.q) * 2.0);
-	}
-
-	const QuaternionKeyFrame &next = _orientationFrames[lastFrame + 1];
-
-	const float f = (time - last.time) / (next.time - last.time);
-	x = f * next.x + (1.0f - f) * last.x;
-	y = f * next.y + (1.0f - f) * last.y;
-	z = f * next.z + (1.0f - f) * last.z;
-
-	const float q = f * next.q + (1.0f - f) * last.q;
-	a = Common::rad2deg(acos(q) * 2.0);
 }
 
 } // End of namespace Aurora

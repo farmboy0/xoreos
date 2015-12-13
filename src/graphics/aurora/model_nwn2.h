@@ -61,8 +61,6 @@ private:
 	struct ParserContext {
 		Common::SeekableReadStream *mdb;
 
-		State *state;
-
 		std::list<ModelNode_NWN2 *> nodes;
 
 		uint32 offModelData;
@@ -74,9 +72,6 @@ private:
 		void clear();
 	};
 
-
-	void newState(ParserContext &ctx);
-	void addState(ParserContext &ctx);
 
 	void load(ParserContext &ctx);
 

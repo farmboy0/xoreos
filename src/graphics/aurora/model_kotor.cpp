@@ -36,7 +36,6 @@
 
 #include "src/graphics/aurora/model_kotor.h"
 #include "src/graphics/aurora/animation.h"
-#include "src/graphics/aurora/animnode.h"
 
 // Disable the "unused variable" warnings while most stuff is still stubbed
 IGNORE_UNUSED_VARIABLES
@@ -107,7 +106,7 @@ namespace Aurora {
 
 Model_KotOR::ParserContext::ParserContext(const Common::UString &name,
                                           const Common::UString &t, bool k2) :
-	mdl(0), mdx(0), state(0), texture(t), kotor2(k2) {
+	mdl(0), mdx(0), texture(t), kotor2(k2) {
 
 	try {
 
@@ -131,12 +130,7 @@ Model_KotOR::ParserContext::~ParserContext() {
 }
 
 void Model_KotOR::ParserContext::clear() {
-	for (std::list<ModelNode_KotOR *>::iterator n = nodes.begin(); n != nodes.end(); ++n)
-		delete *n;
 	nodes.clear();
-
-	delete state;
-	state = 0;
 }
 
 
@@ -219,25 +213,24 @@ void Model_KotOR::load(ParserContext &ctx) {
 
 	readStrings(*ctx.mdl, nameOffsets, ctx.offModelData, ctx.names);
 
-	newState(ctx);
-
 	ModelNode_KotOR *rootNode = new ModelNode_KotOR(*this);
 	ctx.nodes.push_back(rootNode);
 
 	ctx.mdl->seek(ctx.offModelData + nodeHeadPointer);
 	rootNode->load(ctx);
 
-	addState(ctx);
+	_rootNodes.push_back(rootNode);
+	for (std::list<ModelNode_KotOR *>::iterator n = ctx.nodes.begin(); n != ctx.nodes.end(); ++n) {
+		_nodeList.push_back(*n);
+		_nodeMap.insert(std::make_pair((*n)->getName(), *n));
+	}
 
 	std::vector<uint32> animOffsets;
 	readArray(*ctx.mdl, ctx.offModelData + animOffset, animCount, animOffsets);
 
 	for (std::vector<uint32>::const_iterator offset = animOffsets.begin(); offset != animOffsets.end(); ++offset) {
-		newState(ctx);
-
+		ctx.clear();
 		readAnim(ctx, ctx.offModelData + *offset);
-
-		addState(ctx);
 	}
 }
 
@@ -246,7 +239,7 @@ void Model_KotOR::readAnim(ParserContext &ctx, uint32 offset) {
 
 	ctx.mdl->skip(8); // Function pointers
 
-	ctx.state->name = Common::readStringFixed(*ctx.mdl, Common::kEncodingASCII, 32);
+	Common::UString name = Common::readStringFixed(*ctx.mdl, Common::kEncodingASCII, 32);
 
 	uint32 nodeHeadPointer = ctx.mdl->readUint32LE();
 	uint32 nodeCount       = ctx.mdl->readUint32LE();
@@ -275,16 +268,14 @@ void Model_KotOR::readAnim(ParserContext &ctx, uint32 offset) {
 
 	Animation *anim = new Animation();
 
-	anim->setName(ctx.state->name);
+	anim->setName(name);
 	anim->setLength(animLength);
 	anim->setTransTime(transTime);
 
-	_animationMap.insert(std::make_pair(ctx.state->name, anim));
+	_animationMap.insert(std::make_pair(name, anim));
 
 	for (std::list<ModelNode_KotOR *>::iterator n = ctx.nodes.begin(); n != ctx.nodes.end(); ++n) {
-		AnimNode *animnode = new AnimNode(*n);
-
-		anim->addAnimNode(animnode);
+		anim->addModelNode(*n);
 	}
 }
 
@@ -323,39 +314,6 @@ void Model_KotOR::readStrings(Common::SeekableReadStream &mdl,
 	}
 
 	mdl.seek(pos);
-}
-
-void Model_KotOR::newState(ParserContext &ctx) {
-	ctx.clear();
-
-	ctx.state = new State;
-}
-
-void Model_KotOR::addState(ParserContext &ctx) {
-	if (!ctx.state || ctx.nodes.empty()) {
-		ctx.clear();
-		return;
-	}
-
-	for (std::list<ModelNode_KotOR *>::iterator n = ctx.nodes.begin();
-	     n != ctx.nodes.end(); ++n) {
-
-		ctx.state->nodeList.push_back(*n);
-		ctx.state->nodeMap.insert(std::make_pair((*n)->getName(), *n));
-
-		if (!(*n)->getParent())
-			ctx.state->rootNodes.push_back(*n);
-	}
-
-	_stateList.push_back(ctx.state);
-	_stateMap.insert(std::make_pair(ctx.state->name, ctx.state));
-
-	if (!_currentState)
-		_currentState = ctx.state;
-
-	ctx.state = 0;
-
-	ctx.nodes.clear();
 }
 
 

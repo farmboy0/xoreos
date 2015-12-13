@@ -46,7 +46,7 @@ namespace Graphics {
 
 namespace Aurora {
 
-class AnimNode;
+class ModelNode;
 
 class Animation {
 public:
@@ -57,26 +57,32 @@ public:
 	const Common::UString &getName() const;
 	void setName(Common::UString &name);
 
+	/** Get the animations length. */
+	float getLength() const;
+	void setLength(float length);
+
+	void setTransTime(float transtime);
+
+	void addModelNode(ModelNode *node);
+
+	/** Update the model position and orientation */
+	void update(Model *model, float lastFrame, float nextFrame);
+
 protected:
-	typedef std::list<AnimNode *> NodeList;
-	typedef std::map<Common::UString, AnimNode *, Common::UString::iless> NodeMap;
+	typedef std::list<ModelNode *> NodeList;
+	typedef std::map<Common::UString, ModelNode *, Common::UString::iless> NodeMap;
 
-	NodeList nodeList; ///< The nodes within the state.
-	NodeMap  nodeMap;  ///< The nodes within the state, indexed by name.
-
-	NodeList rootNodes; ///< The nodes in the state without a parent.
+	NodeList nodeList; ///< The nodes within the animation.
+	NodeMap  nodeMap;  ///< The nodes within the animation, indexed by name.
 
 	Common::UString _name; ///< The model's name.
 	float _length;
 	float _transtime;
 
-public:
-	void setLength(float length);
-	float getLength() const;
-	void setTransTime(float transtime);
-
-	void update(Model *model, float lastFrame, float nextFrame);
-	void addAnimNode(AnimNode *node);
+private:
+	// Animation helpers
+	void interpolatePosition(ModelNode * animNode, ModelNode *target, float time, float scale) const;
+	void interpolateOrientation(ModelNode * animNode, ModelNode *target, float time) const;
 };
 
 } // End of namespace Aurora

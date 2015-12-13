@@ -81,7 +81,7 @@ namespace Aurora {
 
 Model_Jade::ParserContext::ParserContext(const Common::UString &name,
                                          const Common::UString &t) :
-	mdl(0), mdx(0), state(0), texture(t) {
+	mdl(0), mdx(0), texture(t) {
 
 	try {
 
@@ -105,12 +105,7 @@ Model_Jade::ParserContext::~ParserContext() {
 }
 
 void Model_Jade::ParserContext::clear() {
-	for (std::list<ModelNode_Jade *>::iterator n = nodes.begin(); n != nodes.end(); ++n)
-		delete *n;
 	nodes.clear();
-
-	delete state;
-	state = 0;
 
 	newNode();
 }
@@ -219,15 +214,17 @@ void Model_Jade::load(ParserContext &ctx) {
 
 	readStrings(*ctx.mdl, nameOffsets, ctx.offModelData, ctx.names);
 
-	newState(ctx);
-
 	ModelNode_Jade *rootNode = new ModelNode_Jade(*this);
 	ctx.nodes.push_back(rootNode);
 
 	ctx.mdl->seek(ctx.offModelData + nodeHeadPointer);
 	rootNode->load(ctx);
 
-	addState(ctx);
+	_rootNodes.push_back(rootNode);
+	for (std::list<ModelNode_Jade *>::iterator n = ctx.nodes.begin(); n != ctx.nodes.end(); ++n) {
+		_nodeList.push_back(*n);
+		_nodeMap.insert(std::make_pair((*n)->getName(), *n));
+	}
 }
 
 void Model_Jade::readStrings(Common::SeekableReadStream &mdl,
@@ -244,39 +241,6 @@ void Model_Jade::readStrings(Common::SeekableReadStream &mdl,
 	}
 
 	mdl.seek(pos);
-}
-
-void Model_Jade::newState(ParserContext &ctx) {
-	ctx.clear();
-
-	ctx.state = new State;
-}
-
-void Model_Jade::addState(ParserContext &ctx) {
-	if (!ctx.state || ctx.nodes.empty()) {
-		ctx.clear();
-		return;
-	}
-
-	for (std::list<ModelNode_Jade *>::iterator n = ctx.nodes.begin();
-	     n != ctx.nodes.end(); ++n) {
-
-		ctx.state->nodeList.push_back(*n);
-		ctx.state->nodeMap.insert(std::make_pair((*n)->getName(), *n));
-
-		if (!(*n)->getParent())
-			ctx.state->rootNodes.push_back(*n);
-	}
-
-	_stateList.push_back(ctx.state);
-	_stateMap.insert(std::make_pair(ctx.state->name, ctx.state));
-
-	if (!_currentState)
-		_currentState = ctx.state;
-
-	ctx.state = 0;
-
-	ctx.nodes.clear();
 }
 
 

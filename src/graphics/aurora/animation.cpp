@@ -31,7 +31,6 @@
 #include "src/graphics/aurora/model.h"
 #include "src/graphics/aurora/modelnode.h"
 #include "src/graphics/aurora/animation.h"
-#include "src/graphics/aurora/animnode.h"
 
 using Common::kDebugGraphics;
 
@@ -68,22 +67,97 @@ void Animation::setTransTime(float transtime) {
 	_transtime = transtime;
 }
 
+void Animation::addModelNode(ModelNode *node) {
+	nodeList.push_back(node);
+	nodeMap.insert(std::make_pair(node->getName(), node));
+}
+
 void Animation::update(Model *model, float lastFrame, float nextFrame) {
 	// TODO: Also need to fire off associated events
 	//       for event in _events event->fire()
 
 
 	float scale = model->getAnimationScale(_name);
-	for (NodeList::iterator n = nodeList.begin();
-	     n != nodeList.end(); ++n) {
-		(*n)->update(model, lastFrame, nextFrame, scale);
+	for (NodeList::iterator n = nodeList.begin(); n != nodeList.end(); ++n) {
+		ModelNode *animNode = (*n);
+		ModelNode *target = model->getNode(animNode->getName());
+		if (!target)
+			continue;
+
+		// Determine the corresponding keyframes
+		if (!animNode->_positionFrames.empty())
+			interpolatePosition(animNode, target, nextFrame, scale);
+		if (!animNode->_orientationFrames.empty())
+			interpolateOrientation(animNode, target, nextFrame);
 	}
 }
 
-void Animation::addAnimNode(AnimNode *node) {
-	nodeList.push_back(node);
-	nodeMap.insert(std::make_pair(node->getName(), node));
+void Animation::interpolatePosition(ModelNode * animNode, ModelNode * target, float time, float scale) const {
+	// If only one keyframe, don't interpolate, just return the only position
+	if (animNode->_positionFrames.size() == 1) {
+		const PositionKeyFrame &pos = animNode->_positionFrames[0];
+		target->setPosition(pos.x, pos.y, pos.z);
+		return;
+	}
+
+	size_t lastFrame = 0;
+	for (size_t i = 0; i < animNode->_positionFrames.size(); i++) {
+		const PositionKeyFrame &pos = animNode->_positionFrames[i];
+		if (pos.time >= time)
+			break;
+
+		lastFrame = i;
+	}
+
+	const PositionKeyFrame &last = animNode->_positionFrames[lastFrame];
+	if (lastFrame + 1 >= animNode->_positionFrames.size() || last.time == time) {
+		target->setPosition(last.x, last.y, last.z);
+		return;
+	}
+
+	const PositionKeyFrame &next = animNode->_positionFrames[lastFrame + 1];
+
+	const float f = (time - last.time) / (next.time - last.time);
+	const float x = f * next.x + (1.0f - f) * last.x;
+	const float y = f * next.y + (1.0f - f) * last.y;
+	const float z = f * next.z + (1.0f - f) * last.z;
+	target->setPosition(x, y, z);
 }
+
+void Animation::interpolateOrientation(ModelNode * animNode, ModelNode * target, float time) const {
+	// If only one keyframe, don't interpolate just return the only orientation
+	if (animNode->_orientationFrames.size() == 1) {
+		const QuaternionKeyFrame &ori = animNode->_orientationFrames[0];
+		target->setOrientation(ori.x, ori.y, ori.z, Common::rad2deg(acos(ori.q) * 2.0));
+		return;
+	}
+
+	size_t lastFrame = 0;
+	for (size_t i = 0; i < animNode->_orientationFrames.size(); i++) {
+		const QuaternionKeyFrame &ori = animNode->_orientationFrames[i];
+		if (ori.time >= time)
+			break;
+
+		lastFrame = i;
+	}
+
+	const QuaternionKeyFrame &last = animNode->_orientationFrames[lastFrame];
+	if (lastFrame + 1 >= animNode->_orientationFrames.size() || last.time == time) {
+		target->setOrientation(last.x, last.y, last.z, Common::rad2deg(acos(last.q) * 2.0));
+	}
+
+	const QuaternionKeyFrame &next = animNode->_orientationFrames[lastFrame + 1];
+
+	const float f = (time - last.time) / (next.time - last.time);
+	const float x = f * next.x + (1.0f - f) * last.x;
+	const float y = f * next.y + (1.0f - f) * last.y;
+	const float z = f * next.z + (1.0f - f) * last.z;
+
+	const float q = f * next.q + (1.0f - f) * last.q;
+	const float a = Common::rad2deg(acos(q) * 2.0);
+	target->setOrientation(x, y, z, Common::rad2deg(acos(q) * 2.0));
+}
+
 
 } // End of namespace Aurora
 

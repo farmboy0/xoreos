@@ -57,7 +57,7 @@ namespace Graphics {
 
 namespace Aurora {
 
-Model_NWN2::ParserContext::ParserContext(const Common::UString &name) : mdb(0), state(0) {
+Model_NWN2::ParserContext::ParserContext(const Common::UString &name) : mdb(0) {
 	mdb = ResMan.getResource(name, ::Aurora::kFileTypeMDB);
 	if (!mdb)
 		throw Common::Exception("No such MDB \"%s\"", name.c_str());
@@ -70,12 +70,7 @@ Model_NWN2::ParserContext::~ParserContext() {
 }
 
 void Model_NWN2::ParserContext::clear() {
-	for (std::list<ModelNode_NWN2 *>::iterator n = nodes.begin(); n != nodes.end(); ++n)
-		delete *n;
 	nodes.clear();
-
-	delete state;
-	state = 0;
 }
 
 
@@ -93,19 +88,17 @@ Model_NWN2::~Model_NWN2() {
 }
 
 void Model_NWN2::setTint(const float tint[3][4]) {
-	for (StateList::iterator s = _stateList.begin(); s != _stateList.end(); ++s)
-		for (NodeList::iterator n = (*s)->nodeList.begin(); n != (*s)->nodeList.end(); ++n)
-			dynamic_cast<ModelNode_NWN2 &>(**n).setTint(tint);
+	for (NodeList::iterator n = _nodeList.begin(); n != _nodeList.end(); ++n)
+		dynamic_cast<ModelNode_NWN2 &>(**n).setTint(tint);
 }
 
 void Model_NWN2::setTintFloor(const float tint[3][4]) {
 	// Tileset model floor node names are of the form TL_XX_YYYY_##_F
 
-	for (StateList::iterator s = _stateList.begin(); s != _stateList.end(); ++s)
-		for (NodeList::iterator n = (*s)->nodeList.begin(); n != (*s)->nodeList.end(); ++n)
-			if ((*n)->getName().beginsWith("TL_"))
-				if ((*n)->getName().endsWith("_F"))
-					dynamic_cast<ModelNode_NWN2 &>(**n).setTint(tint);
+	for (NodeList::iterator n = _nodeList.begin(); n != _nodeList.end(); ++n)
+		if ((*n)->getName().beginsWith("TL_"))
+			if ((*n)->getName().endsWith("_F"))
+				dynamic_cast<ModelNode_NWN2 &>(**n).setTint(tint);
 }
 
 void Model_NWN2::setTintWalls(const float tint[3][4]) {
@@ -113,12 +106,11 @@ void Model_NWN2::setTintWalls(const float tint[3][4]) {
 	// Exclude floors (TL_XX_YYYY_##_F), roof (TL_XX_YYYY_##_R),
 	// walk meshes (TL_XX_YYYY_##_W) and collision meshes (TL_XX_YYYY_##_C3)
 
-	for (StateList::iterator s = _stateList.begin(); s != _stateList.end(); ++s)
-		for (NodeList::iterator n = (*s)->nodeList.begin(); n != (*s)->nodeList.end(); ++n)
-			if ((*n)->getName().beginsWith("TL_"))
-				if (!(*n)->getName().endsWith("_F") && !(*n)->getName().endsWith("_R") &&
-				    !(*n)->getName().endsWith("_W") && !(*n)->getName().endsWith("_C3"))
-					dynamic_cast<ModelNode_NWN2 &>(**n).setTint(tint);
+	for (NodeList::iterator n = _nodeList.begin(); n != _nodeList.end(); ++n)
+		if ((*n)->getName().beginsWith("TL_"))
+			if (!(*n)->getName().endsWith("_F") && !(*n)->getName().endsWith("_R") &&
+			    !(*n)->getName().endsWith("_W") && !(*n)->getName().endsWith("_C3"))
+				dynamic_cast<ModelNode_NWN2 &>(**n).setTint(tint);
 }
 
 void Model_NWN2::load(ParserContext &ctx) {
@@ -140,8 +132,6 @@ void Model_NWN2::load(ParserContext &ctx) {
 		packetKey->offset    = ctx.mdb->readUint32LE();
 	}
 
-	newState(ctx);
-
 	for (std::vector<PacketKey>::const_iterator packetKey = packetKeys.begin();
 	     packetKey != packetKeys.end(); ++packetKey) {
 
@@ -161,40 +151,12 @@ void Model_NWN2::load(ParserContext &ctx) {
 			delete newNode;
 	}
 
-	addState(ctx);
-}
-
-void Model_NWN2::newState(ParserContext &ctx) {
-	ctx.clear();
-
-	ctx.state = new State;
-}
-
-void Model_NWN2::addState(ParserContext &ctx) {
-	if (!ctx.state || ctx.nodes.empty()) {
-		ctx.clear();
-		return;
-	}
-
-	for (std::list<ModelNode_NWN2 *>::iterator n = ctx.nodes.begin();
-	     n != ctx.nodes.end(); ++n) {
-
-		ctx.state->nodeList.push_back(*n);
-		ctx.state->nodeMap.insert(std::make_pair((*n)->getName(), *n));
-
+	for (std::list<ModelNode_NWN2 *>::iterator n = ctx.nodes.begin(); n != ctx.nodes.end(); ++n) {
+		_nodeList.push_back(*n);
+		_nodeMap.insert(std::make_pair((*n)->getName(), *n));
 		if (!(*n)->getParent())
-			ctx.state->rootNodes.push_back(*n);
+			_rootNodes.push_back(*n);
 	}
-
-	_stateList.push_back(ctx.state);
-	_stateMap.insert(std::make_pair(ctx.state->name, ctx.state));
-
-	if (!_currentState)
-		_currentState = ctx.state;
-
-	ctx.state = 0;
-
-	ctx.nodes.clear();
 }
 
 
