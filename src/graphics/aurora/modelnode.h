@@ -39,6 +39,8 @@
 #include "src/graphics/aurora/types.h"
 #include "src/graphics/aurora/texturehandle.h"
 
+#include "src/graphics/mesh/meshman.h"
+
 namespace Graphics {
 
 namespace Aurora {
@@ -129,6 +131,7 @@ protected:
 
 	VertexBuffer _vertexBuffer; ///< Node geometry vertex buffer.
 	IndexBuffer _indexBuffer;   ///< Node geometry index buffer.
+    Mesh::Mesh *_mesh; ///< The node's geometry.
 
 	float _center     [3]; ///< The node's center.
 	float _position   [3]; ///< Position of the node.

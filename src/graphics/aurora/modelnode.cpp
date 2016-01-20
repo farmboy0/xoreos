@@ -61,9 +61,14 @@ ModelNode::ModelNode(Model &model) :
 	_scale[0] = 1.0f;
 	_scale[1] = 1.0f;
 	_scale[2] = 1.0f;
+
+    _mesh = 0; // Should also be added to MeshMan, so this class won't "own" it.
 }
 
 ModelNode::~ModelNode() {
+    if (_mesh) {
+        _mesh->useDecrement();
+    }
 	// dtor
 }
 
@@ -205,6 +210,11 @@ void ModelNode::inheritGeometry(ModelNode &node) const {
 	node._isTransparent = _isTransparent;
 	node._vertexBuffer  = _vertexBuffer;
 	node._indexBuffer   = _indexBuffer;
+    node._mesh          = _mesh;
+
+    if (_mesh) {
+        _mesh->useIncrement();
+    }
 
 	memcpy(node._center, _center, 3 * sizeof(float));
 	node._boundBox = _boundBox;
@@ -475,7 +485,12 @@ void ModelNode::renderGeometryNormal() {
 	if (_textures.empty())
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	_vertexBuffer.draw(GL_TRIANGLES, _indexBuffer);
+    // Render the node's faces
+    if (_mesh) {
+        _mesh->renderImmediate();
+    } else {
+        _vertexBuffer.draw(GL_TRIANGLES, _indexBuffer);
+    }
 
 	for (size_t t = 0; t < _textures.size(); t++) {
 		TextureMan.activeTexture(t);
