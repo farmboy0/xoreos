@@ -62,13 +62,16 @@ ModelNode::ModelNode(Model &model) :
 	_scale[1] = 1.0f;
 	_scale[2] = 1.0f;
 
-    _mesh = 0; // Should also be added to MeshMan, so this class won't "own" it.
+	_mesh = 0; // Should also be added to MeshMan, so this class won't "own" it.
+	_shaderRenderable = 0;
 }
 
 ModelNode::~ModelNode() {
-    if (_mesh) {
-        _mesh->useDecrement();
-    }
+	if (_mesh) {
+		_mesh->useDecrement();
+	}
+
+	delete _shaderRenderable;
 	// dtor
 }
 
@@ -485,12 +488,15 @@ void ModelNode::renderGeometryNormal() {
 	if (_textures.empty())
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    // Render the node's faces
-    if (_mesh) {
-        _mesh->renderImmediate();
-    } else {
-        _vertexBuffer.draw(GL_TRIANGLES, _indexBuffer);
-    }
+
+	// Render node's faces, or use a shader system if discovered.
+	if (_shaderRenderable) {
+		_shaderRenderable->renderImmediate(_absolutePosition);
+	} else if (_mesh) {
+		_mesh->renderImmediate();
+	} else {
+		_vertexBuffer.draw(GL_TRIANGLES, _indexBuffer);
+	}
 
 	for (size_t t = 0; t < _textures.size(); t++) {
 		TextureMan.activeTexture(t);

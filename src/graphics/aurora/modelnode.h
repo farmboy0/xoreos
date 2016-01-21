@@ -40,6 +40,7 @@
 #include "src/graphics/aurora/texturehandle.h"
 
 #include "src/graphics/mesh/meshman.h"
+#include "src/graphics/shader/shaderrenderable.h"
 
 namespace Graphics {
 
@@ -132,6 +133,7 @@ protected:
 	VertexBuffer _vertexBuffer; ///< Node geometry vertex buffer.
 	IndexBuffer _indexBuffer;   ///< Node geometry index buffer.
     Mesh::Mesh *_mesh; ///< The node's geometry.
+    Shader::ShaderRenderable *_shaderRenderable;  ///< Rendering description.
 
 	float _center     [3]; ///< The node's center.
 	float _position   [3]; ///< Position of the node.
