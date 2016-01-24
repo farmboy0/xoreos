@@ -132,8 +132,8 @@ protected:
 
 	VertexBuffer _vertexBuffer; ///< Node geometry vertex buffer.
 	IndexBuffer _indexBuffer;   ///< Node geometry index buffer.
-    Mesh::Mesh *_mesh; ///< The node's geometry.
-    Shader::ShaderRenderable *_shaderRenderable;  ///< Rendering description.
+	Mesh::Mesh *_mesh; ///< The node's geometry.
+	Shader::ShaderRenderable *_shaderRenderable;  ///< Rendering description.
 
 	float _center     [3]; ///< The node's center.
 	float _position   [3]; ///< Position of the node.
@@ -146,6 +146,7 @@ protected:
 
 	/** Position of the node after translate/rotate. */
 	Common::TransformationMatrix _absolutePosition;
+	Common::TransformationMatrix _renderTransform;
 
 	float _wirecolor[3]; ///< Color of the wireframe.
 	float _ambient  [3]; ///< Ambient color.
@@ -198,7 +199,7 @@ protected:
 	void createAbsoluteBound();
 	void createAbsoluteBound(Common::BoundingBox parentPosition);
 
-	void render(RenderPass pass);
+	void render(RenderPass pass, const Common::TransformationMatrix &parentTransform);
 	void drawSkeleton(const Common::TransformationMatrix &parent, bool showInvisible);
 
 	void lockFrame();

@@ -219,6 +219,8 @@ private:
 
 	FPSCounter *_fpsCounter; ///< Counts the current frames per seconds value.
 	uint32 _lastSampled; ///< Timestamp used to advance animations.
+	Common::TransformationMatrix _perspective;   ///< 3D perspective projection.
+	Common::TransformationMatrix _orthographic;  ///< Orthogonal perspective projection.
 	Common::TransformationMatrix _projection;    ///< Our projection matrix.
 	Common::TransformationMatrix _projectionInv; ///< The inverse of our projection matrix.
 	Common::TransformationMatrix _modelview;     ///< Our base modelview matrix (i.e camera view).

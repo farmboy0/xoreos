@@ -213,11 +213,11 @@ void ModelNode::inheritGeometry(ModelNode &node) const {
 	node._isTransparent = _isTransparent;
 	node._vertexBuffer  = _vertexBuffer;
 	node._indexBuffer   = _indexBuffer;
-    node._mesh          = _mesh;
+	node._mesh          = _mesh;
 
-    if (_mesh) {
-        _mesh->useIncrement();
-    }
+	if (_mesh) {
+		_mesh->useIncrement();
+	}
 
 	memcpy(node._center, _center, 3 * sizeof(float));
 	node._boundBox = _boundBox;
@@ -491,7 +491,7 @@ void ModelNode::renderGeometryNormal() {
 
 	// Render node's faces, or use a shader system if discovered.
 	if (_shaderRenderable) {
-		_shaderRenderable->renderImmediate(_absolutePosition);
+		_shaderRenderable->renderImmediate(_renderTransform);
 	} else if (_mesh) {
 		_mesh->renderImmediate();
 	} else {
@@ -576,7 +576,7 @@ void ModelNode::renderGeometryEnvMappedOver() {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-void ModelNode::render(RenderPass pass) {
+void ModelNode::render(RenderPass pass, const Common::TransformationMatrix &parentTransform) {
 	// Apply the node's transformation
 
 	glTranslatef(_position[0], _position[1], _position[2]);
@@ -588,6 +588,14 @@ void ModelNode::render(RenderPass pass) {
 
 	glScalef(_scale[0], _scale[1], _scale[2]);
 
+	//_renderTransform.loadIdentity();
+	_renderTransform = parentTransform;
+	_renderTransform.translate(_position[0], _position[1], _position[2]);
+	_renderTransform.rotate(_orientation[3], _orientation[0], _orientation[1], _orientation[2]);
+	_renderTransform.rotate(_rotation[0], 1.0f, 0.0f, 0.0f);
+	_renderTransform.rotate(_rotation[1], 0.0f, 1.0f, 0.0f);
+	_renderTransform.rotate(_rotation[2], 0.0f, 0.0f, 1.0f);
+	_renderTransform.scale(_scale[0], _scale[1], _scale[2]);
 
 	// Render the node's geometry
 
@@ -603,7 +611,7 @@ void ModelNode::render(RenderPass pass) {
 	// Render the node's children
 	for (std::list<ModelNode *>::iterator c = _children.begin(); c != _children.end(); ++c) {
 		glPushMatrix();
-		(*c)->render(pass);
+		(*c)->render(pass, _renderTransform);
 		glPopMatrix();
 	}
 }

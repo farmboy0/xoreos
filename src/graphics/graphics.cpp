@@ -532,27 +532,27 @@ void GraphicsManager::perspective(float fovy, float aspect, float zNear, float z
 	const float t1 = (zFar + zNear) / (zNear - zFar);
 	const float t2 = (2 * zFar * zNear) / (zNear - zFar);
 
-	_projection(0, 0) =  f / aspect;
-	_projection(0, 1) =  0.0f;
-	_projection(0, 2) =  0.0f;
-	_projection(0, 3) =  0.0f;
+	_perspective(0, 0) =  f / aspect;
+	_perspective(0, 1) =  0.0f;
+	_perspective(0, 2) =  0.0f;
+	_perspective(0, 3) =  0.0f;
 
-	_projection(1, 0) =  0.0f;
-	_projection(1, 1) =  f;
-	_projection(1, 2) =  0.0f;
-	_projection(1, 3) =  0.0f;
+	_perspective(1, 0) =  0.0f;
+	_perspective(1, 1) =  f;
+	_perspective(1, 2) =  0.0f;
+	_perspective(1, 3) =  0.0f;
 
-	_projection(2, 0) =  0.0f;
-	_projection(2, 1) =  0.0f;
-	_projection(2, 2) =  t1;
-	_projection(2, 3) =  t2;
+	_perspective(2, 0) =  0.0f;
+	_perspective(2, 1) =  0.0f;
+	_perspective(2, 2) =  t1;
+	_perspective(2, 3) =  t2;
 
-	_projection(3, 0) =  0.0f;
-	_projection(3, 1) =  0.0f;
-	_projection(3, 2) = -1.0f;
-	_projection(3, 3) =  0.0f;
+	_perspective(3, 0) =  0.0f;
+	_perspective(3, 1) =  0.0f;
+	_perspective(3, 2) = -1.0f;
+	_perspective(3, 3) =  0.0f;
 
-	_projectionInv = _projection.getInverse();
+	_projectionInv = _perspective.getInverse();
 }
 
 void GraphicsManager::setOrthogonal(float clipNear, float clipFar) {
@@ -575,32 +575,32 @@ void GraphicsManager::ortho(float left, float right, float bottom, float top, fl
 	assert(zFar > zNear);
 	assert((zFar - zNear) > 0.001f);
 
-	_projection(0, 0) = 2.0f / (right - left);
-	_projection(0, 1) = 0.0f;
-	_projection(0, 2) = 0.0f;
-	_projection(0, 3) = - ((right + left) / (right - left));
+	_orthographic(0, 0) = 2.0f / (right - left);
+	_orthographic(0, 1) = 0.0f;
+	_orthographic(0, 2) = 0.0f;
+	_orthographic(0, 3) = - ((right + left) / (right - left));
 
-	_projection(1, 0) = 0.0f;
-	_projection(1, 1) = 2.0f / (top - bottom);
-	_projection(1, 2) = 0.0f;
-	_projection(1, 3) = - ((top + bottom) / (top - bottom));
+	_orthographic(1, 0) = 0.0f;
+	_orthographic(1, 1) = 2.0f / (top - bottom);
+	_orthographic(1, 2) = 0.0f;
+	_orthographic(1, 3) = - ((top + bottom) / (top - bottom));
 
-	_projection(2, 0) = 0.0f;
-	_projection(2, 1) = 0.0f;
-	_projection(2, 2) = - (2.0f / (zFar - zNear));
-	_projection(2, 3) = - ((zFar + zNear) / (zFar - zNear));
+	_orthographic(2, 0) = 0.0f;
+	_orthographic(2, 1) = 0.0f;
+	_orthographic(2, 2) = - (2.0f / (zFar - zNear));
+	_orthographic(2, 3) = - ((zFar + zNear) / (zFar - zNear));
 
-	_projection(3, 0) = 0.0f;
-	_projection(3, 1) = 0.0f;
-	_projection(3, 2) = 0.0f;
-	_projection(3, 3) = 1.0f;
+	_orthographic(3, 0) = 0.0f;
+	_orthographic(3, 1) = 0.0f;
+	_orthographic(3, 2) = 0.0f;
+	_orthographic(3, 3) = 1.0f;
 
-	_projectionInv = _projection.getInverse();
+	//_projectionInv = _orthographic.getInverse();
 }
 
 bool GraphicsManager::project(float x, float y, float z, float &sX, float &sY, float &sZ) {
 	// This is our projection matrix
-	Common::TransformationMatrix proj(_projection);
+	Common::TransformationMatrix proj(_perspective);
 
 
 	// Generate the model matrix
@@ -988,6 +988,9 @@ bool GraphicsManager::renderWorld() {
 	memcpy(cPos   , CameraMan.getPosition   (), 3 * sizeof(float));
 	memcpy(cOrient, CameraMan.getOrientation(), 3 * sizeof(float));
 
+	_projection = _perspective;
+	_projectionInv = _perspective.getInverse();
+
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
@@ -1060,12 +1063,19 @@ bool GraphicsManager::renderGUIFront() {
 
 	glDisable(GL_DEPTH_TEST);
 
+//	_projection = _orthographic;
+//	_projectionInv = _orthographic.getInverse();
+	_projection.loadIdentity();
+	_projection.scale(2.0f / _width, 2.0f / _height, 0.0f);
+
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glScalef(2.0f / _width, 2.0f / _height, 0.0f);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+
+	_modelview.loadIdentity();
 
 	QueueMan.lockQueue(kQueueVisibleGUIFrontObject);
 	const std::list<Queueable *> &gui = QueueMan.getQueue(kQueueVisibleGUIFrontObject);
@@ -1093,12 +1103,17 @@ bool GraphicsManager::renderGUIBack() {
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(GL_FALSE);
 
+	_projection.loadIdentity();
+	_projection.scale(2.0f / _width, 2.0f / _height, 0.0f);
+
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glScalef(2.0f / _width, 2.0f / _height, 0.0f);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+
+	_modelview.loadIdentity();
 
 	QueueMan.lockQueue(kQueueVisibleGUIBackObject);
 	const std::list<Queueable *> &gui = QueueMan.getQueue(kQueueVisibleGUIBackObject);
