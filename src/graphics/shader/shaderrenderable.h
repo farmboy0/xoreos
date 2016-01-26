@@ -51,6 +51,8 @@ public:
 	void setMaterial(Shader::ShaderMaterial *material);
 	void setMesh(Mesh::Mesh *mesh);
 
+	void copyRenderable(Shader::ShaderRenderable *src);
+
 	void renderImmediate(const Common::TransformationMatrix &tform);
 
 private:

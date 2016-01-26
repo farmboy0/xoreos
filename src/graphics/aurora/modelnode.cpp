@@ -219,6 +219,10 @@ void ModelNode::inheritGeometry(ModelNode &node) const {
 		_mesh->useIncrement();
 	}
 
+	if (node._shaderRenderable) {
+	} else {
+	}
+
 	memcpy(node._center, _center, 3 * sizeof(float));
 	node._boundBox = _boundBox;
 }
