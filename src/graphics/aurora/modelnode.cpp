@@ -220,7 +220,9 @@ void ModelNode::inheritGeometry(ModelNode &node) const {
 	}
 
 	if (node._shaderRenderable) {
+		node._shaderRenderable->copyRenderable(_shaderRenderable);
 	} else {
+		node._shaderRenderable = new Shader::ShaderRenderable(_shaderRenderable);
 	}
 
 	memcpy(node._center, _center, 3 * sizeof(float));
@@ -526,7 +528,15 @@ void ModelNode::renderGeometryEnvMappedUnder() {
 		TextureMan.set(_textures[t], TextureManager::kModeDiffuse);
 	}
 
-	_vertexBuffer.draw(GL_TRIANGLES, _indexBuffer);
+	//_vertexBuffer.draw(GL_TRIANGLES, _indexBuffer);
+	// Render node's faces, or use a shader system if discovered.
+	if (_shaderRenderable) {
+		_shaderRenderable->renderImmediate(_renderTransform);
+	} else if (_mesh) {
+		_mesh->renderImmediate();
+	} else {
+		_vertexBuffer.draw(GL_TRIANGLES, _indexBuffer);
+	}
 
 	for (size_t t = 0; t < _textures.size(); t++) {
 		TextureMan.activeTexture(t);
