@@ -133,6 +133,7 @@ protected:
 	VertexBuffer _vertexBuffer; ///< Node geometry vertex buffer.
 	IndexBuffer _indexBuffer;   ///< Node geometry index buffer.
 	Mesh::Mesh *_mesh; ///< The node's geometry.
+	Shader::ShaderMaterial *_material;  ///< The node's primary rendering material.
 	Shader::ShaderRenderable *_shaderRenderable;  ///< Rendering description.
 
 	float _center     [3]; ///< The node's center.
