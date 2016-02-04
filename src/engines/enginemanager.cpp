@@ -68,6 +68,8 @@
 #include "src/engines/dragonage/probes.h"
 #include "src/engines/dragonage2/probes.h"
 
+#include "src/graphics/shader/materialman.h"
+
 DECLARE_SINGLETON(Engines::EngineManager)
 
 namespace Engines {
@@ -294,6 +296,9 @@ void EngineManager::cleanup() const {
 		unregisterModelLoader();
 
 		RequestMan.sync();
+
+		// Need to clean up materials, or else they'll contain references to deleted textures.
+		MaterialMan.cleanup();
 
 		FontMan.clear();
 		CursorMan.clear();
