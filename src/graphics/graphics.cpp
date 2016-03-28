@@ -1443,7 +1443,7 @@ void GraphicsManager::setFullScreen(bool fullScreen) {
 	// Now try to change modes
 	int result;
 	if (fullScreen)
-		result = SDL_SetWindowFullscreen(_screen, SDL_WINDOW_FULLSCREEN);
+		result = SDL_SetWindowFullscreen(_screen, SDL_WINDOW_FULLSCREEN_DESKTOP);
 	else
 		result = SDL_SetWindowFullscreen(_screen, 0);
 
@@ -1453,7 +1453,20 @@ void GraphicsManager::setFullScreen(bool fullScreen) {
 
 	_fullScreen = fullScreen;
 
+	int oldWidth = _width, oldHeight = _height;
+	if (fullScreen) {
+		SDL_GetWindowSize(_screen, &_width, &_height);
+	} else {
+		// SDL_GetWindowSize doesnt work for windowed mode on linux
+		// see https://bugzilla.libsdl.org/show_bug.cgi?id=2227
+		_width  = ConfigMan.getInt("width"  , _width);
+		_height = ConfigMan.getInt("height" , _height);
+	}
+
 	rebuildContext();
+
+	// Let the NotificationManager notify the Notifyables that the resolution changed
+	NotificationMan.resized(oldWidth, oldHeight, _width, _height);
 }
 
 void GraphicsManager::toggleMouseGrab() {
