@@ -1440,19 +1440,18 @@ void GraphicsManager::setFullScreen(bool fullScreen) {
 
 	destroyContext();
 
-	// uint32 flags = SDL_GetWindowFlags(_screen);
 	// Now try to change modes
-	SDL_SetWindowFullscreen(_screen, SDL_WINDOW_FULLSCREEN);
-
-	// If we could not go full screen, revert back.
-	if (!_screen)
-		SDL_SetWindowFullscreen(_screen, 0);
+	int result;
+	if (fullScreen)
+		result = SDL_SetWindowFullscreen(_screen, SDL_WINDOW_FULLSCREEN);
 	else
-		_fullScreen = fullScreen;
+		result = SDL_SetWindowFullscreen(_screen, 0);
 
 	// There's no reason how this could possibly fail, but ok...
-	if (!_screen)
-		throw Common::Exception("Failed going to fullscreen and then failed reverting.");
+	if (result < 0)
+		throw Common::Exception("Unable to set %s mode: %s", (fullScreen ? "fullscreen" : "windowed"), SDL_GetError());
+
+	_fullScreen = fullScreen;
 
 	rebuildContext();
 }
