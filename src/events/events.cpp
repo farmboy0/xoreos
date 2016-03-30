@@ -172,6 +172,8 @@ bool EventsManager::parseEventGraphics(const Event &event) {
 		// If the window was restored, reassert the window size
 		if (event.window.event == kEventWindowRestored)
 			GfxMan.setScreenSize(GfxMan.getScreenWidth(), GfxMan.getScreenHeight());
+		if (event.window.event == kEventWindowSizeChanged)
+			NotificationMan.resized(GfxMan.getScreenWidth(), GfxMan.getScreenHeight(), event.window.data1, event.window.data2);
 
 		return true;
 	}

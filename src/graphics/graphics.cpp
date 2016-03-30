@@ -210,11 +210,11 @@ uint32 GraphicsManager::getFPS() const {
 }
 
 void GraphicsManager::initSize(int width, int height, bool fullscreen) {
-	uint32 flags = SDL_WINDOW_OPENGL;
+	uint32 flags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
 
 	_fullScreen = fullscreen;
 	if (_fullScreen)
-		flags |= SDL_WINDOW_FULLSCREEN | SDL_WINDOW_RESIZABLE ;
+		flags |= SDL_WINDOW_FULLSCREEN;
 
 	if (!setupSDLGL(width, height, flags))
 		throw Common::Exception("Failed setting the video mode: %s", SDL_GetError());
@@ -1453,7 +1453,6 @@ void GraphicsManager::setFullScreen(bool fullScreen) {
 
 	_fullScreen = fullScreen;
 
-	int oldWidth = _width, oldHeight = _height;
 	if (fullScreen) {
 		SDL_GetWindowSize(_screen, &_width, &_height);
 	} else {
@@ -1464,9 +1463,6 @@ void GraphicsManager::setFullScreen(bool fullScreen) {
 	}
 
 	rebuildContext();
-
-	// Let the NotificationManager notify the Notifyables that the resolution changed
-	NotificationMan.resized(oldWidth, oldHeight, _width, _height);
 }
 
 void GraphicsManager::toggleMouseGrab() {
@@ -1524,10 +1520,6 @@ void GraphicsManager::setScreenSize(int width, int height) {
 	_width = width;
 	_height = height;
 	rebuildContext();
-
-	// Let the NotificationManager notify the Notifyables that the resolution changed
-		NotificationMan.resized(_width, _height, width, height);
-
 }
 
 void GraphicsManager::showCursor(bool show) {
