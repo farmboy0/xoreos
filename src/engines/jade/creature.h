@@ -77,6 +77,9 @@ public:
 	/** (Un)Highlight the creature. */
 	virtual void highlight(bool enabled);
 
+	void playNextAnimation();
+	void playPreviousAnimation();
+
 private:
 	bool _isPC; ///< Is the creature a PC?
 
@@ -86,6 +89,9 @@ private:
 	uint32 _headType;   ///< The creature's type of head if separate from the model.
 
 	Common::ScopedPtr<Graphics::Aurora::Model> _model; ///< The creature's model.
+
+	std::list<Common::UString> _modelStates;
+	std::list<Common::UString>::const_iterator _currentModelState;
 
 
 	void load(const Aurora::GFF3Struct &creature);

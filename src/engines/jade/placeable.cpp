@@ -46,6 +46,11 @@ Placeable::Placeable(const Aurora::GFF3Struct &placeable) : Object(kObjectTypePl
 	_appearanceType(Aurora::kFieldIDInvalid), _lastOpenedBy(0), _lastClosedBy(0) {
 
 	load(placeable);
+
+	if (_model)
+		_modelStates = _model->getStates();
+
+	_currentModelState = _modelStates.end();
 }
 
 Placeable::~Placeable() {
@@ -245,6 +250,39 @@ void Placeable::playStateSound() {
 	uint32 soundIndex = sound.getSint(soundKey);
 
 	CuePlay.playSoundCue(_soundCue, soundIndex);
+}
+
+void Placeable::playNextAnimation() {
+	if (!_model)
+		return;
+
+	if (_currentModelState == _modelStates.end())
+		_currentModelState = _modelStates.begin();
+
+	if (_currentModelState == _modelStates.end())
+		return;
+
+	warning("Setting state \"%s\" on model \"%s\" (\"%s\")", _currentModelState->c_str(),
+	        _model->getName().c_str(), _tag.c_str());
+
+	_model->setState(*_currentModelState);
+
+	++_currentModelState;
+}
+
+void Placeable::playPreviousAnimation() {
+	if (!_model || _modelStates.empty())
+		return;
+
+	--_currentModelState;
+
+	warning("Setting state \"%s\" on model \"%s\" (\"%s\")", _currentModelState->c_str(),
+	        _model->getName().c_str(), _tag.c_str());
+
+	_model->setState(*_currentModelState);
+
+	if (_currentModelState == _modelStates.begin())
+		_currentModelState = _modelStates.end();
 }
 
 } // End of namespace Jade

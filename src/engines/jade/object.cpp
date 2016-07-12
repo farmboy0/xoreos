@@ -203,6 +203,12 @@ void Object::playAnimation(Animation animation) {
 	// playAnimation(kAnimations[animation]);
 }
 
+void Object::playNextAnimation() {
+}
+
+void Object::playPreviousAnimation() {
+}
+
 void Object::loadPositional (const Aurora::GFF3Struct& gff) {
 
 	const Aurora::GFF3Struct &positional = gff.getStruct("Positional");

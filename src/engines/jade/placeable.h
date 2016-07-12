@@ -63,6 +63,11 @@ public:
 	/** (Un)Highlight the placeable. */
 	virtual void highlight(bool enabled);
 
+	// Object/Cursor interactions
+
+	void playNextAnimation();
+	void playPreviousAnimation();
+
 protected:
 	Common::UString _modelName; ///< The model's resource name.
 	Common::UString _soundCue;  ///< The placeable's sound cue.
@@ -74,6 +79,9 @@ protected:
 	Object *_lastClosedBy; ///< The object that last closed this placeable object.
 
 	Common::ScopedPtr<Graphics::Aurora::Model> _model; ///< The placeable's model.
+
+	std::list<Common::UString> _modelStates;
+	std::list<Common::UString>::const_iterator _currentModelState;
 
 	int32 _state; ///< The placeable's current state.
 	Common::ScopedPtr<Aurora::GFF3File> _fsm; ///< The placeable's state file.

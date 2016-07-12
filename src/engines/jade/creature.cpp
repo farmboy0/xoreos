@@ -48,10 +48,17 @@ Creature::Creature(const Aurora::GFF3Struct &creature) : Object(kObjectTypeCreat
 	_appearance(Aurora::kFieldIDInvalid), _headType(0) {
 
 	load(creature);
+
+	if (_model)
+		_modelStates = _model->getStates();
+
+	_currentModelState = _modelStates.end();
 }
 
 Creature::Creature() : Object(kObjectTypeCreature), _isPC(false), _autoBalance(0),
-	_appearance(Aurora::kFieldIDInvalid), _headType(0) {
+	_appearance(Aurora::kFieldIDInvalid), _headType(0), _model(0) {
+
+	_currentModelState = _modelStates.end();
 }
 
 Creature::~Creature() {
@@ -213,6 +220,39 @@ void Creature::leave() {
 
 void Creature::highlight(bool enabled) {
 	_model->drawBound(enabled);
+}
+
+void Creature::playNextAnimation() {
+	if (!_model)
+		return;
+
+	if (_currentModelState == _modelStates.end())
+		_currentModelState = _modelStates.begin();
+
+	if (_currentModelState == _modelStates.end())
+		return;
+
+	warning("Playing animation \"%s\" on model \"%s\" (\"%s\")", _currentModelState->c_str(),
+	        _model->getName().c_str(), _tag.c_str());
+
+	_model->playAnimation(*_currentModelState, true, -1);
+
+	++_currentModelState;
+}
+
+void Creature::playPreviousAnimation() {
+	if (!_model || _modelStates.empty())
+		return;
+
+	--_currentModelState;
+
+	warning("Playing animation \"%s\" on model \"%s\" (\"%s\")", _currentModelState->c_str(),
+	        _model->getName().c_str(), _tag.c_str());
+
+	_model->playAnimation(*_currentModelState, true, -1);
+
+	if (_currentModelState == _modelStates.begin())
+		_currentModelState = _modelStates.end();
 }
 
 } // End of namespace Jade

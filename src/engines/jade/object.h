@@ -143,6 +143,9 @@ public:
 	/** Play a default object animation. */
 	virtual void playAnimation(Animation animation);
 
+	virtual void playNextAnimation();
+	virtual void playPreviousAnimation();
+
 protected:
 	ObjectType _type; ///< The object's type.
 

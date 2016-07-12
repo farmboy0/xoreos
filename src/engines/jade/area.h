@@ -125,6 +125,9 @@ private:
 	void highlightAll(bool enabled);
 
 	void click(int x, int y);
+
+	void playNextAnimation();
+	void playPreviousAnimation();
 };
 
 } // End of namespace Jade
