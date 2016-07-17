@@ -257,6 +257,28 @@ private:
 	void actionMoveToLocation(Aurora::NWScript::FunctionContext &ctx);
 	void actionJumpToObject  (Aurora::NWScript::FunctionContext &ctx);
 	void actionMoveToObject  (Aurora::NWScript::FunctionContext &ctx);
+
+	void actionPlaySound2D(Aurora::NWScript::FunctionContext &ctx);
+	void actionPlaySound3D(Aurora::NWScript::FunctionContext &ctx);
+	// '---
+
+	// .--- Sound, functions_sound.cpp
+	void playSound2D        (Aurora::NWScript::FunctionContext &ctx);
+	void playSound3D        (Aurora::NWScript::FunctionContext &ctx);
+	void playSoundAtPosition(Aurora::NWScript::FunctionContext &ctx);
+	void playSoundSet       (Aurora::NWScript::FunctionContext &ctx);
+
+	void soundObjectPlay(Aurora::NWScript::FunctionContext &ctx);
+	void soundObjectStop(Aurora::NWScript::FunctionContext &ctx);
+
+	void pauseSound              (Aurora::NWScript::FunctionContext &ctx);
+	void disableSoundSet         (Aurora::NWScript::FunctionContext &ctx);
+	void disableMusicStateChanges(Aurora::NWScript::FunctionContext &ctx);
+
+	void setMusicState(Aurora::NWScript::FunctionContext &ctx);
+	void getMusicState(Aurora::NWScript::FunctionContext &ctx);
+
+	void setAreaMusicState(Aurora::NWScript::FunctionContext &ctx);
 	// '---
 
 	// .--- Events, functions_event.cpp
