@@ -59,6 +59,7 @@ public:
 
 	bool isPC() const; ///< Is the creature a player character?
 
+	uint32 getAppearance() const;
 	int32 getAutoBalance() const;
 
 	// Positioning

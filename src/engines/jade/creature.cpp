@@ -71,6 +71,10 @@ bool Creature::isPC() const {
 	return _isPC;
 }
 
+uint32 Creature::getAppearance() const {
+	return _appearance;
+}
+
 int32 Creature::getAutoBalance() const {
 	return _autoBalance;
 }
