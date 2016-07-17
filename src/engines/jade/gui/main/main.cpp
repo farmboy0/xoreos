@@ -34,6 +34,7 @@
 
 #include "src/engines/jade/arealayout.h"
 #include "src/engines/jade/module.h"
+#include "src/engines/jade/soundcueplayer.h"
 
 #include "src/engines/jade/gui/main/main.h"
 #include "src/engines/jade/gui/main/options.h"
@@ -94,12 +95,16 @@ void MainMenu::show() {
 	if (_background)
 		_background->show();
 	::Engines::KotOR::GUI::show();
+
+	CuePlay.changeMusicState(8300);
 }
 
 void MainMenu::hide() {
 	if (_background)
 		_background->hide();
 	::Engines::KotOR::GUI::hide();
+
+	CuePlay.changeMusicState(0);
 }
 
 void MainMenu::callbackActive(Widget &widget) {
