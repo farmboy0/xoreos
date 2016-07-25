@@ -510,6 +510,36 @@ void SoundManager::setListenerGain(float gain) {
 		alListenerf(AL_GAIN, gain);
 }
 
+void SoundManager::setListenerPosition(float x, float y, float z) {
+	checkReady();
+
+	Common::StackLock lock(_mutex);
+
+	if (_hasSound)
+		alListener3f(AL_POSITION, x, y, z);
+}
+
+void SoundManager::setListenerVelocity(float x, float y, float z) {
+	checkReady();
+
+	Common::StackLock lock(_mutex);
+
+	if (_hasSound)
+		alListener3f(AL_VELOCITY, x, y, z);
+}
+
+void SoundManager::setListenerOrientation(float x, float y, float z, float UNUSED(angle)) {
+	checkReady();
+
+	Common::StackLock lock(_mutex);
+
+	if (_hasSound) {
+		ALfloat ori[] = {x, y, z, 0.0, 1.0, 0.0};
+		// TODO use angle for up vector
+		alListenerfv(AL_ORIENTATION, ori);
+	}
+}
+
 void SoundManager::setChannelPosition(const ChannelHandle &handle, float x, float y, float z) {
 	Common::StackLock lock(_mutex);
 
