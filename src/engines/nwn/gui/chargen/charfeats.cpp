@@ -54,9 +54,6 @@ WidgetListItemFeat::WidgetListItemFeat(::Engines::GUI &gui, FeatItem &feat) :
                                                             feat.icon, kMoveButton | kHelpButton),
                                        _feat(feat) {
 
-	// Set maximum width for text.
-	_text->set(feat.name, 230.f);
-
 	setTag("Item#" + feat.name + "#" + Common::generateIDNumberString());
 }
 

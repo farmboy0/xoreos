@@ -53,9 +53,6 @@ WidgetListItemSkill::WidgetListItemSkill(::Engines::GUI &gui, const SkillItem &s
 
 	setTag("Item#" + skill.name);
 
-	// Set maximum width for text.
-	_text->set(skill.name, 230.f);
-
 	// Up and down buttons.
 	_upButton = new WidgetButton(gui, _tag + "#Up", "ctl_cg_btn_skup");
 	addChild(*_upButton);

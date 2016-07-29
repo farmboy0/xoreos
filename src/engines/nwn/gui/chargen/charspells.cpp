@@ -48,8 +48,6 @@ namespace NWN {
 
 WidgetListItemSpell::WidgetListItemSpell(::Engines::GUI &gui, Spell spell, bool isRight) :
     WidgetListItemButton(gui, "ctl_cg_btn_feat", spell.name, spell.icon, kMoveButton | kHelpButton) {
-	// Set maximum width for text.
-	_text->set(spell.name, 230.f);
 
 	if (!isRight)
 		changeArrowDirection();
