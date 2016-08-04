@@ -33,6 +33,7 @@
 
 #include "src/graphics/images/txi.h"
 
+#include "src/graphics/aurora/animation.h"
 #include "src/graphics/aurora/modelnode.h"
 #include "src/graphics/aurora/textureman.h"
 #include "src/graphics/aurora/texture.h"
@@ -495,6 +496,14 @@ void ModelNode::render(RenderPass pass) {
 	glScalef(_scale[0], _scale[1], _scale[2]);
 
 	Mesh *mesh = _mesh;
+	if (!_model->getState().empty()) {
+		Animation *anim = _model->getAnimation(_model->getState());
+		if (anim->hasNode(_name)) {
+			ModelNode *animNode = anim->getNode(_name);
+			if (animNode->_mesh && animNode->_mesh->data)
+				mesh = animNode->_mesh;
+		}
+	}
 
 	// Render the node's geometry
 
