@@ -72,6 +72,26 @@ void Animation::addModelNode(ModelNode *node) {
 	nodeMap.insert(std::make_pair(node->getName(), node));
 }
 
+bool Animation::hasNode(const Common::UString &node) const {
+	return (nodeMap.find(node) != nodeMap.end());
+}
+
+ModelNode *Animation::getNode(const Common::UString &node) {
+	NodeMap::iterator n = nodeMap.find(node);
+	if (n == nodeMap.end())
+		return 0;
+
+	return n->second;
+}
+
+const ModelNode *Animation::getNode(const Common::UString &node) const {
+	NodeMap::const_iterator n = nodeMap.find(node);
+	if (n == nodeMap.end())
+		return 0;
+
+	return n->second;
+}
+
 void Animation::update(Model *model, float lastFrame, float nextFrame) {
 	// TODO: Also need to fire off associated events
 	//       for event in _events event->fire()

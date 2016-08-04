@@ -63,10 +63,20 @@ public:
 
 	void setTransTime(float transtime);
 
-	void addModelNode(ModelNode *node);
-
 	/** Update the model position and orientation */
 	void update(Model *model, float lastFrame, float nextFrame);
+
+	// Nodes
+
+	void addModelNode(ModelNode *node);
+
+	/** Does the specified node exist? */
+	bool hasNode(const Common::UString &node) const;
+
+	/** Get the specified node. */
+	ModelNode *getNode(const Common::UString &node);
+	/** Get the specified node. */
+	const ModelNode *getNode(const Common::UString &node) const;
 
 protected:
 	typedef std::list<ModelNode *> NodeList;
