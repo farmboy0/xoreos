@@ -316,18 +316,32 @@ bool Tooltip::createTexts(float width, size_t maxLines) {
 	deleteTexts();
 
 	Graphics::Aurora::FontHandle font = FontMan.get(_font);
+	float lineHeight = font.getFont().getHeight() + font.getFont().getLineSpacing();
 
 	const float maxWidth = _showBubble ? (width - (_showPortrait ? 18.0f : 0.0f)) : 0.0f;
 
+	float currentMaxWidth = 0.0f;
+	std::vector<Line> splitLines;
 	for (std::vector<Line>::const_iterator l = _lines.begin(); l != _lines.end(); l++) {
 		std::vector<Common::UString> lineLines;
-
-		font.getFont().split(l->line, lineLines, maxWidth);
-
+		currentMaxWidth = MAX(currentMaxWidth, ceilf(font.getFont().split(l->line, lineLines, maxWidth)));
 		for (std::vector<Common::UString>::const_iterator i = lineLines.begin(); i != lineLines.end(); ++i) {
-			_texts.push_back(new Graphics::Aurora::Text(font, *i, l->r, l->g, l->b, l->a));
-			_texts.back()->setTag("Tooltip#Text");
+			splitLines.push_back(Line());
+			splitLines.back().r    = l->r;
+			splitLines.back().g    = l->g;
+			splitLines.back().b    = l->b;
+			splitLines.back().a    = l->a;
+			splitLines.back().line = *i;
 		}
+	}
+
+	if (currentMaxWidth > maxWidth) {
+		return false;
+	}
+
+	for (std::vector<Line>::const_iterator l = splitLines.begin(); l != splitLines.end(); l++) {
+		_texts.push_back(new Graphics::Aurora::Text(font, currentMaxWidth, lineHeight, l->line, l->r, l->g, l->b, l->a, Graphics::Aurora::kHAlignCenter));
+		_texts.back()->setTag("Tooltip#Text");
 	}
 
 	return !_showBubble || !maxLines || (_texts.size() <= maxLines);
