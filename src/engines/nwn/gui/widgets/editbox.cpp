@@ -57,15 +57,17 @@ void WidgetEditBox::hide() {
 }
 
 void WidgetEditBox::setTitle(const Common::UString &font, const Common::UString &title) {
-	if (!_title)
-		_title.reset(new Graphics::Aurora::Text(FontMan.get(font), title));
+	Graphics::Aurora::ModelNode *titleNode = _model->getNode("title0");
+	if (!_title) {
+		_title.reset(new Graphics::Aurora::Text(FontMan.get(font), titleNode->getWidth(), titleNode->getHeight(), title));
+	}
 
-	_title->set(title);
+	_title->setText(title);
 
 	// Get text node position.
 	float tX, tY, tZ, wX, wY, wZ;
 	getPosition(wX, wY, wZ);
-	_model->getNode("title0")->getPosition(tX, tY, tZ);
+	titleNode->getPosition(tX, tY, tZ);
 
 	tY -= _title->getHeight();
 
