@@ -97,7 +97,7 @@ DialogBox::DialogBox(float width, float height) :
 
 	_portrait.reset(new Portrait("", Portrait::kSizeMedium));
 
-	_name.reset(new Graphics::Aurora::Text(FontMan.get("fnt_galahad14"), " ",
+	_name.reset(new Graphics::Aurora::Text(FontMan.get("fnt_galahad14"), width, height, " ",
 	                                       kLightBlueR, kLightBlueG, kLightBlueB));
 
 	_highlightedReply = _replyLines.end();
@@ -244,7 +244,7 @@ void DialogBox::setPortrait(const Common::UString &portrait) {
 void DialogBox::setName(const Common::UString &name) {
 	// TODO: DialogBox::setName(): Check whether the name overflows the box
 
-	_name->set(name);
+	_name->setText(name);
 }
 
 void DialogBox::showEntry() {
@@ -293,7 +293,7 @@ void DialogBox::setEntry(const Common::UString &entry) {
 	_font.getFont().split(_entry, lines, maxWidth);
 
 	for (std::vector<Common::UString>::iterator l = lines.begin(); l != lines.end(); ++l)
-		_entryLines.push_back(new Graphics::Aurora::Text(_font, *l));
+		_entryLines.push_back(new Graphics::Aurora::Text(_font, _width, _font.getFont().getHeight(), *l));
 
 	setPosition(_x, _y, _z);
 
@@ -365,7 +365,7 @@ void DialogBox::finishReplies() {
 		_replyLines.push_back(ReplyLine(r));
 
 		_replyLines.back().count =
-			new Graphics::Aurora::Text(_font, Common::UString::format("%d. ", ++_replyCount),
+			new Graphics::Aurora::Text(_font, _width, _font.getFont().getHeight(), Common::UString::format("%d. ", ++_replyCount),
 			                           kLightBlueR, kLightBlueG, kLightBlueB);
 
 		_replyCountWidth = MAX(_replyCountWidth, _replyLines.back().count->getWidth());
@@ -386,13 +386,13 @@ void DialogBox::finishReplies() {
 		if (line == lines.end())
 			continue;
 
-		r->line = new Graphics::Aurora::Text(_font, *line,
+		r->line = new Graphics::Aurora::Text(_font, maxWidth, _font.getFont().getHeight(), *line,
 		                                     kLightBlueR, kLightBlueG, kLightBlueB);
 
 		for (++line; line != lines.end(); ++line) {
 			r = _replyLines.insert(++r, ReplyLine(reply));
 
-			r->line = new Graphics::Aurora::Text(_font, *line,
+			r->line = new Graphics::Aurora::Text(_font, maxWidth, _font.getFont().getHeight(), *line,
 			                                     kLightBlueR, kLightBlueG, kLightBlueB);
 		}
 
