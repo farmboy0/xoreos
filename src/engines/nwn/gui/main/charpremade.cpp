@@ -58,8 +58,8 @@ WidgetListItemCharacter::WidgetListItemCharacter(::Engines::GUI &gui, const Comm
                                                                           spacing) {
 
 	_portrait.reset (new Portrait(portrait, Portrait::kSizeTiny, 1.0f));
-	_textName.reset (new Graphics::Aurora::Text(FontMan.get(font), name));
-	_textClass.reset(new Graphics::Aurora::Text(FontMan.get(font), classes));
+	_textName.reset (new Graphics::Aurora::Text(FontMan.get(font), getWidth(), getHeight(), name));
+	_textClass.reset(new Graphics::Aurora::Text(FontMan.get(font), getWidth(), getHeight(), classes));
 }
 
 WidgetListItemCharacter::~WidgetListItemCharacter() {
