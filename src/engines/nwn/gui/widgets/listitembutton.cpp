@@ -128,7 +128,7 @@ WidgetListItemButton::WidgetListItemButton(::Engines::GUI &gui, const Common::US
 	WidgetListItemBaseButton(gui, button, 1.0f, soundClick),
 	_isRight(true), _isMovable(false), _moveButtonRight(0), _moveButtonLeft(0) {
 
-	_text.reset(new Graphics::Aurora::Text(FontMan.get("fnt_galahad14"), text));
+	_text.reset(new Graphics::Aurora::Text(FontMan.get("fnt_galahad14"), getWidth(), getHeight(), text));
 
 	if (!icon.empty())
 		_icon.reset(new Portrait(icon, Portrait::kSizeIcon));
