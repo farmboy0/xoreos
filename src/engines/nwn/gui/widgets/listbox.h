@@ -81,7 +81,7 @@ private:
 /** A text line widget within a NWN listbox widget. */
 class WidgetListItemTextLine : public WidgetListItem {
 public:
-	WidgetListItemTextLine(::Engines::GUI &gui, const Common::UString &font,
+	WidgetListItemTextLine(::Engines::GUI &gui, const Common::UString &font, const float width,
 	                       const Common::UString &text, float spacing = 0.0f);
 	~WidgetListItemTextLine();
 
@@ -108,6 +108,7 @@ private:
 	float _uR, _uG, _uB, _uA;
 	float _sR, _sG, _sB, _sA;
 
+	float _width;
 	float _fontHeight;
 	float _spacing;
 };

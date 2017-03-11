@@ -55,7 +55,7 @@ void CharFeatsPopup::setFeats(std::vector<FeatItem> feats) {
 	featBox->clear();
 	getListBox("FeatsList", true)->setMode(WidgetListBox::kModeSelectable);
 	for (std::vector<FeatItem>::iterator f = feats.begin(); f != feats.end(); ++f) {
-		WidgetListItemTextLine *item = new WidgetListItemTextLine(*this, "fnt_galahad14", (*f).name);
+		WidgetListItemTextLine *item = new WidgetListItemTextLine(*this, "fnt_galahad14", featBox->getWidth() , (*f).name);
 		featBox->add(item);
 	}
 	featBox->unlock();

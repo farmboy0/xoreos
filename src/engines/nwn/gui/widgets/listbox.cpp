@@ -141,17 +141,17 @@ void WidgetListItem::signalGroupMemberActive() {
 }
 
 
-WidgetListItemTextLine::WidgetListItemTextLine(::Engines::GUI &gui,
-    const Common::UString &font, const Common::UString &text, float spacing) :
+WidgetListItemTextLine::WidgetListItemTextLine(::Engines::GUI &gui, const Common::UString &font,
+    const float width, const Common::UString &text, float spacing) :
 	WidgetListItem(gui),
 	_uR(1.0f), _uG(1.0f), _uB(1.0f), _uA(1.0f),
-	_sR(1.0f), _sG(1.0f), _sB(0.0f), _sA(1.0f), _spacing(spacing) {
+	_sR(1.0f), _sG(1.0f), _sB(0.0f), _sA(1.0f), _width(width), _spacing(spacing) {
 
 	Graphics::Aurora::FontHandle f = FontMan.get(font);
 
 	_fontHeight = f.getFont().getHeight();
 
-	_text.reset(new Graphics::Aurora::Text(f, text, _uR, _uG, _uB, _uA));
+	_text.reset(new Graphics::Aurora::Text(f, getWidth(), _fontHeight, text, _uR, _uG, _uB, _uA));
 
 	_text->setClickable(true);
 }
@@ -195,7 +195,7 @@ void WidgetListItemTextLine::setSelectedColor(float r, float g, float b, float a
 }
 
 float WidgetListItemTextLine::getWidth() const {
-	return _text->getWidth();
+	return _width;
 }
 
 float WidgetListItemTextLine::getHeight() const {
@@ -531,7 +531,7 @@ void WidgetListBox::setText(const Common::UString &font,
 	f.getFont().split(text, lines, getContentWidth());
 
 	for (std::vector<Common::UString>::iterator l = lines.begin(); l != lines.end(); ++l)
-		add(new WidgetListItemTextLine(*_gui, font, *l, spacing));
+		add(new WidgetListItemTextLine(*_gui, font, getWidth(), *l, spacing));
 
 	unlock();
 }

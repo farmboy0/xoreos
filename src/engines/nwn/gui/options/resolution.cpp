@@ -138,7 +138,7 @@ void OptionsResolutionMenu::initResolutionsBox(WidgetListBox &resList) {
 
 	resList.clear();
 	for (std::vector<Graphics::Resolution>::const_iterator r = _useableResolutions.begin(); r != _useableResolutions.end(); ++r)
-		resList.add(new WidgetListItemTextLine(*this, "fnt_dialog16x16",
+		resList.add(new WidgetListItemTextLine(*this, "fnt_dialog16x16", resList.getWidth(),
 					Common::UString::format("%dx%d", r->width, r->height), 0.0f));
 
 	resList.unlock();
