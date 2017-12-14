@@ -33,17 +33,6 @@ namespace Graphics {
 
 namespace Aurora {
 
-Text::Text(const FontHandle &font, const Common::UString &str,
-		float r, float g, float b, float a, float halign, float valign) :
-	Graphics::GUIElement(Graphics::GUIElement::kGUIElementFront),
-	_r(r), _g(g), _b(b), _a(a), _font(font), _x(0.0f), _y(0.0f), _halign(halign),_valign(valign),
-	_disableColorTokens(false) {
-
-	set(str);
-
-	_distance = -FLT_MAX;
-}
-
 Text::Text(const FontHandle &font, float w, float h, const Common::UString &str,
 		float r, float g, float b, float a, float halign, float valign) :
 	Graphics::GUIElement(Graphics::GUIElement::kGUIElementFront), _r(r), _g(g), _b(b), _a(a),
@@ -78,26 +67,6 @@ Text::~Text() {
 
 void Text::disableColorTokens(bool disabled) {
 	_disableColorTokens = disabled;
-}
-
-void Text::set(const Common::UString &str, float maxWidth, float maxHeight) {
-	lockFrameIfVisible();
-
-	if (!_disableColorTokens)
-		parseColors(str, _str, _colors);
-	else
-		_str = str;
-
-	Font &font = _font.getFont();
-
-	font.buildChars(str);
-
-	_lineCount = font.getLineCount(_str, maxWidth, maxHeight);
-
-	_height = font.getHeight(_str, maxWidth, maxHeight);
-	_width  = font.getWidth (_str, maxWidth);
-
-	unlockFrameIfVisible();
 }
 
 void Text::setText(const Common::UString &str) {
