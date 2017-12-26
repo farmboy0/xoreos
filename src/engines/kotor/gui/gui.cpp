@@ -119,13 +119,13 @@ void GUI::loadWidget(const Aurora::GFF3Struct &strct, Widget *parent) {
 
 	createWidget(ctx);
 
-	if (_guiWidth  <= 0.0f)
-		_guiWidth  = ctx.widget->getWidth();
-	if (_guiHeight <= 0.0f)
-		_guiHeight = ctx.widget->getHeight();
-
 	float wX, wY, wZ;
 	ctx.widget->getPosition(wX, wY, wZ);
+
+	if (_guiWidth  <= 0.0f)
+		_guiWidth  = wX + ctx.widget->getWidth();
+	if (_guiHeight <= 0.0f)
+		_guiHeight = wY + ctx.widget->getHeight();
 
 	if (ctx.parent) {
 		float pX, pY, pZ;
