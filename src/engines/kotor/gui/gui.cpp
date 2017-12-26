@@ -80,12 +80,12 @@ void GUI::hide() {
 
 void GUI::convertToXoreos(float &x, float &y, const float widgetHeight) const {
 	x = x - (_guiWidth / 2.0f);
-	y = (_guiHeight / 2.0f) - y - widgetHeight;
+	y = -y + (_guiHeight / 2.0f) - widgetHeight;
 }
 
 void GUI::convertToGUI(float &x, float &y, const float widgetHeight) const {
 	x = x + (_guiWidth / 2.0f);
-	y = widgetHeight + (-1.0f * (y - (_guiHeight / 2.0f)));
+	y = y - (_guiHeight / 2.0f) + widgetHeight;
 }
 
 void GUI::mouseDown() {
