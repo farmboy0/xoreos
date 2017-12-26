@@ -127,6 +127,15 @@ void GUI::loadWidget(const Aurora::GFF3Struct &strct, Widget *parent) {
 	float wX, wY, wZ;
 	ctx.widget->getPosition(wX, wY, wZ);
 
+	if (ctx.parent) {
+		float pX, pY, pZ;
+		ctx.parent->getPosition(pX, pY, pZ);
+		convertToGUI(pX, pY, ctx.parent->getHeight());
+
+		wX += pX;
+		wY += pY;
+	}
+
 	convertToXoreos(wX, wY, ctx.widget->getHeight());
 	wZ = _widgetZ + wZ;
 
