@@ -19,46 +19,34 @@
  */
 
 /** @file
- *  The Jade Empire main menu.
+ *  The character selection menu in the Jade character generation menu.
  */
 
-#ifndef ENGINES_JADE_GUI_MAIN_MAIN_H
-#define ENGINES_JADE_GUI_MAIN_MAIN_H
+#ifndef ENGINES_JADE_GUI_CHARGEN_CHARSELECT_H
+#define ENGINES_JADE_GUI_CHARGEN_CHARSELECT_H
 
 #include "src/engines/kotor/gui/gui.h"
+
+#include "src/engines/jade/gui/chargen/chargeninfo.h"
 
 namespace Engines {
 
 namespace Jade {
 
-class AreaLayout;
-class Module;
-
-class MainMenu : public ::Engines::KotOR::GUI {
+class CharacterSelection : public ::Engines::KotOR::GUI {
 public:
-	MainMenu(Module &module, ::Engines::Console *console = 0);
-	~MainMenu();
-
-	void show(); ///< Show the GUI.
-	void hide(); ///< Hide the GUI.
-
-protected:
-	void callbackActive(Widget &widget);
-	void addBackground();
+	CharacterSelection(CharacterGenerationInfo &chargen, ::Engines::Console *console = 0);
 
 private:
-	Module *_module;
+	void callbackActive(Widget &widget);
 
-	AreaLayout *_background;
+	void update();
 
-	Common::ScopedPtr<GUI> _options;
-
-	void createOptions();
-	void newGame();
+	size_t _currentPlayer;
 };
 
 } // End of namespace Jade
 
 } // End of namespace Engines
 
-#endif // ENGINES_JADE_GUI_MAIN_MAIN_H
+#endif // ENGINES_JADE_GUI_CHARGEN_CHARSELECT_H

@@ -19,46 +19,46 @@
  */
 
 /** @file
- *  The Jade Empire main menu.
+ *  The class for storing character information for generation.
  */
 
-#ifndef ENGINES_JADE_GUI_MAIN_MAIN_H
-#define ENGINES_JADE_GUI_MAIN_MAIN_H
+#ifndef ENGINES_JADE_GUI_CHARGEN_CHARGENCHAR_H
+#define ENGINES_JADE_GUI_CHARGEN_CHARGENCHAR_H
 
-#include "src/engines/kotor/gui/gui.h"
+#include "src/common/ustring.h"
+
+#include "src/graphics/aurora/model.h"
+
+#include "src/engines/jade/types.h"
+#include "src/engines/jade/creature.h"
 
 namespace Engines {
 
 namespace Jade {
 
-class AreaLayout;
-class Module;
-
-class MainMenu : public ::Engines::KotOR::GUI {
+class CharacterGenerationInfo {
 public:
-	MainMenu(Module &module, ::Engines::Console *console = 0);
-	~MainMenu();
+	CharacterGenerationInfo();
 
-	void show(); ///< Show the GUI.
-	void hide(); ///< Hide the GUI.
+	/** Get the name of the character. */
+	const Common::UString &getName();
+	/** Get the name of the portrait of this character. */
+	Common::UString getPortrait();
 
-protected:
-	void callbackActive(Widget &widget);
-	void addBackground();
+	/** Set the name of the Character. */
+	void setName(const Common::UString &name);
+
+	Creature *getCharacter();
+	Graphics::Aurora::Model *getModel();
 
 private:
-	Module *_module;
+	Common::UString _name;
 
-	AreaLayout *_background;
-
-	Common::ScopedPtr<GUI> _options;
-
-	void createOptions();
-	void newGame();
+	Common::ScopedPtr<Graphics::Aurora::Model> _body;
 };
 
 } // End of namespace Jade
 
 } // End of namespace Engines
 
-#endif // ENGINES_JADE_GUI_MAIN_MAIN_H
+#endif // ENGINES_JADE_GUI_CHARGEN_CHARGENCHAR_H

@@ -38,6 +38,9 @@
 #include "src/engines/jade/gui/main/main.h"
 #include "src/engines/jade/gui/main/options.h"
 
+#include "src/engines/jade/gui/chargen/chargeninfo.h"
+#include "src/engines/jade/gui/chargen/charselect.h"
+
 #include "src/engines/kotor/gui/widgets/label.h"
 #include "src/engines/kotor/gui/widgets/listbox.h"
 #include "src/engines/kotor/gui/widgets/button.h"
@@ -111,13 +114,7 @@ void MainMenu::callbackActive(Widget &widget) {
 	}
 
 	if (widget.getTag() == "NEW_GAME") {
-		try {
-			_module->load("j01_town");
-			_returnCode = 1;
-		} catch (...) {
-			Common::exceptionDispatcherWarning();
-			return;
-		}
+		newGame();
 		return;
 	}
 
@@ -141,6 +138,23 @@ void MainMenu::addBackground() {
 
 void MainMenu::createOptions() {
 	_options.reset(new OptionsMenu());
+}
+
+void MainMenu::newGame() {
+	CharacterGenerationInfo newPlayer;
+
+	CharacterSelection charSelect(newPlayer, _console);
+	uint32 ret = sub(charSelect, 0, true, true);
+
+	if (ret == 2) {
+		try {
+			_module->load("j01_town");
+			_returnCode = 1;
+		} catch (...) {
+			Common::exceptionDispatcherWarning();
+			return;
+		}
+	}
 }
 
 } // End of namespace Jade
