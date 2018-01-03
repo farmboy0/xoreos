@@ -37,6 +37,8 @@ public:
 	~WidgetLabel();
 
 	void load(const Aurora::GFF3Struct &gff);
+
+	void mouseUp(uint8 state, float x, float y);
 };
 
 } // End of namespace KotOR

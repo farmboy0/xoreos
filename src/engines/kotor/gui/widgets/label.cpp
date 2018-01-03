@@ -43,6 +43,17 @@ void WidgetLabel::load(const Aurora::GFF3Struct &gff) {
 	KotORWidget::load(gff);
 }
 
+void WidgetLabel::mouseUp(uint8 UNUSED(state), float UNUSED(x), float UNUSED(y)) {
+	if (isDisabled())
+		return;
+	if ((_quad && !_quad->isClickable()) ||
+	    (_text && !_text->isClickable()) ||
+	    (_highlight && !_highlight->isClickable()))
+		return;
+
+	setActive(true);
+}
+
 } // End of namespace KotOR
 
 } // End of namespace Engines
