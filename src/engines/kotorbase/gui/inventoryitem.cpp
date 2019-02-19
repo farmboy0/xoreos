@@ -99,12 +99,11 @@ void WidgetInventoryItem::load(const Aurora::GFF3Struct &gff) {
 		_text->getColor(r, g, b, a);
 
 		_countText.reset(new Graphics::Aurora::Text(FontMan.get("fnt_d16x16"),
-		                 "", r, g, b, a,
+		                 frameSize, frameSize, "", r, g, b, a,
 		                 Graphics::Aurora::kHAlignRight,
 		                 Graphics::Aurora::kVAlignBottom));
 
 		_countText->setPosition(x - 4.0f, y + (_height - frameSize) / 2.0f - 2.0f, 0.0f);
-		_countText->setSize(frameSize, frameSize);
 	}
 }
 
